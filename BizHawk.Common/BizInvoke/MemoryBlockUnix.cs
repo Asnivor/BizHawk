@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace BizHawk.Common.BizInvoke
 {
@@ -172,10 +173,15 @@ namespace BizHawk.Common.BizInvoke
 
 		private static class Kernel
 		{
+			[DllImport("libc.so.6")]
 			public static extern int memfd_create(string name, uint flags);
+			[DllImport("libc.so.6")]
 			public static extern int close(int fd);
+			[DllImport("libc.so.6")]
 			public static extern IntPtr mmap(IntPtr addr, UIntPtr length, int prot, int flags, int fd, IntPtr offset);
+			[DllImport("libc.so.6")]
 			public static extern int munmap(IntPtr addr, UIntPtr length);
+			[DllImport("libc.so.6")]
 			public static extern int mprotect(IntPtr addr, UIntPtr len, int prot);
 
 			public static IntPtr mmap(IntPtr addr, UIntPtr length, Protection prot, int flags, int fd, IntPtr offset)
