@@ -1,4 +1,5 @@
-﻿using BizHawk.Common.BizInvoke;
+﻿using BizHawk.Common;
+using BizHawk.Common.BizInvoke;
 using BizHawk.Emulation.Common;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,9 @@ namespace BizHawk.Emulation.Cores.Waterbox
 
 		public Heap(ulong start, ulong size, string name)
 		{
-			Memory = new MemoryBlock(start, size);
+			Memory = PlatformLinkedLibSingleton.RunningOnUnix
+				? (MemoryBlock) new MemoryBlockUnix(start, size)
+				: (MemoryBlock) new MemoryBlockWin32(start, size);
 			Used = 0;
 			Name = name;
 			Console.WriteLine("Created heap `{1}` at {0:x16}:{2:x16}", start, name, start + size);
