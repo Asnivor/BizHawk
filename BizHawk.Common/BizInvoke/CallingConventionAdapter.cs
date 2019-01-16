@@ -140,9 +140,7 @@ namespace BizHawk.Common.BizInvoke
 			public SysVHostMsGuest()
 			{
 				int size = 4 * 1024 * 1024;
-				_memory = PlatformLinkedLibSingleton.RunningOnUnix
-					? (MemoryBlock) new MemoryBlockUnix((ulong) size)
-					: (MemoryBlock) new MemoryBlockWin32((ulong) size);
+				_memory = MemoryBlock.PlatformConstructor((ulong) size);
 				_memory.Activate();
 				_refs = new WeakReference[size / BlockSize];
 			}

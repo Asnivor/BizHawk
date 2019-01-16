@@ -12,12 +12,6 @@ namespace BizHawk.Common.BizInvoke
 		private IntPtr _handle;
 
 		/// <summary>
-		/// allocate size bytes at any address
-		/// </summary>
-		/// <param name="size"></param>
-		public MemoryBlockWin32(ulong size) : this(0, size) {}
-
-		/// <summary>
 		/// allocate size bytes starting at a particular address
 		/// </summary>
 		/// <param name="start"></param>

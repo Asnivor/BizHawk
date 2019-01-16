@@ -172,9 +172,7 @@ namespace BizHawk.Emulation.Cores.Waterbox
 			// OK, NOW MOUNT
 
 			LoadOffset = (long)Start - (long)_pe.ImageNtHeaders.OptionalHeader.ImageBase;
-			Memory = PlatformLinkedLibSingleton.RunningOnUnix
-				? (MemoryBlock) new MemoryBlockUnix(Start, Size)
-				: (MemoryBlock) new MemoryBlockWin32(Start, Size);
+			Memory = MemoryBlock.PlatformConstructor(Start, Size);
 			Memory.Activate();
 			Memory.Protect(Start, Size, MemoryBlock.Protection.RW);
 

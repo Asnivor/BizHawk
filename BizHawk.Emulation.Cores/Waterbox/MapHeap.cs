@@ -1,5 +1,4 @@
-﻿using BizHawk.Common;
-using BizHawk.Emulation.Common;
+﻿using BizHawk.Emulation.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,9 +50,7 @@ namespace BizHawk.Emulation.Cores.Waterbox
 		public MapHeap(ulong start, ulong size, string name)
 		{
 			size = WaterboxUtils.AlignUp(size);
-			Memory = PlatformLinkedLibSingleton.RunningOnUnix
-				? (MemoryBlock) new MemoryBlockUnix(start, size)
-				: (MemoryBlock) new MemoryBlockWin32(start, size);
+			Memory = MemoryBlock.PlatformConstructor(start, size);
 			Name = name;
 			_pagesAsBytes = new byte[size >> WaterboxUtils.PageShift];
 			_pages = (MemoryBlock.Protection[])(object)_pagesAsBytes;

@@ -12,12 +12,6 @@ namespace BizHawk.Common.BizInvoke
 		private int _fd;
 
 		/// <summary>
-		/// allocate size bytes at any address
-		/// </summary>
-		/// <param name="size"></param>
-		public MemoryBlockUnix(ulong size) : this(0, size) {}
-
-		/// <summary>
 		/// allocate size bytes starting at a particular address
 		/// </summary>
 		/// <param name="start"></param>

@@ -127,6 +127,24 @@ namespace BizHawk.Common.BizInvoke
 			Dispose(false);
 		}
 
+		/// <summary>
+		/// allocate size bytes at any address
+		/// </summary>
+		public static MemoryBlock PlatformConstructor(ulong size)
+		{
+			return PlatformConstructor(0, size);
+		}
+
+		/// <summary>
+		/// allocate size bytes starting at a particular address
+		/// </summary>
+		public static MemoryBlock PlatformConstructor(ulong start, ulong size)
+		{
+			return PlatformLinkedLibSingleton.RunningOnUnix
+				? (MemoryBlock) new MemoryBlockUnix(start, size)
+				: (MemoryBlock) new MemoryBlockWin32(start, size);
+		}
+
 		private class MemoryViewStream : Stream
 		{
 			public MemoryViewStream(bool readable, bool writable, long ptr, long length, MemoryBlock owner)
