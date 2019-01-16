@@ -12,7 +12,7 @@ namespace BizHawk.Client.EmuHawk
 		//And it looks like GamePad itself isn't supported on OpenTK OS X.
 
 		private static readonly object _syncObj = new object();
-		public static List<OTK_GamePad> Devices;
+		public static List<OTK_GamePad> Devices = new List<OTK_GamePad>();
 		private const int MAX_JOYSTICKS = 4; //They don't have a way to query this for some reason. 4 is the minimum promised.
 
 		public static void Initialize()
