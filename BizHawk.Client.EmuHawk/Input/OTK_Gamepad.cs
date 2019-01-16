@@ -6,31 +6,34 @@ namespace BizHawk.Client.EmuHawk
 {
 	public class OTK_GamePad
 	{
-		//Note: OpenTK has both Gamepad and Joystick classes. An OpenTK Gamepad is a simplified version of Joystick
-		//with pre-defined features that match an XInput controller. They did this to mimic XNA's controller API.
-		//We're going to use Joystick directly, because it gives us full access to all possible buttons.
-		//And it looks like GamePad itself isn't supported on OpenTK OS X.
+		// Modified OpenTK Gamepad Handler
+		// OpenTK v3.x.x.x breaks the original OpenTK.Input.Joystick implementation, but enables OpenTK.Input.Gamepad 
+		// compatibility with OSX / linux
+		// This should also give us vibration support (if we implement it)
 
 		private static readonly object _syncObj = new object();
 		public static List<OTK_GamePad> Devices = new List<OTK_GamePad>();
-		private const int MAX_JOYSTICKS = 4; //They don't have a way to query this for some reason. 4 is the minimum promised.
+		private const int MAX_GAMEPADS = 4; //They don't have a way to query this for some reason. 4 is the minimum promised.
 
 		public static void Initialize()
 		{
-			Devices = new List<OTK_GamePad>();
+			Devices.Clear();
 
-			for (int i = 0; i < MAX_JOYSTICKS; i++)
+			lock (_syncObj)
 			{
-				JoystickState jss = Joystick.GetState(i);
-				if (jss.IsConnected)
+				for (int i = 0; i < MAX_GAMEPADS; i++)
 				{
-					Console.WriteLine(string.Format("joydevice index: {0}", i)); //OpenTK doesn't expose the GUID, even though it stores it internally...
-
-					OTK_GamePad ogp = new OTK_GamePad(i);
-					Devices.Add(ogp);
+					GamePadState gps = OpenTK.Input.GamePad.GetState(i);
+					if (gps.IsConnected)
+					{
+						Console.WriteLine(string.Format("joydevice index: {0}", i)); //OpenTK doesn't expose the GUID, even though it stores it internally...
+						string gpn = OpenTK.Input.GamePad.GetName(i);
+						GamePadCapabilities gpc = OpenTK.Input.GamePad.GetCapabilities(i);
+						OTK_GamePad ogp = new OTK_GamePad(i, gpn, gpc);
+						Devices.Add(ogp);
+					}
 				}
-			}
-
+			}			
 		}
 
 		public static IEnumerable<OTK_GamePad> EnumerateDevices()
@@ -46,8 +49,13 @@ namespace BizHawk.Client.EmuHawk
 
 		public static void UpdateAll()
 		{
-			foreach (var device in Devices)
-				device.Update();
+			lock (_syncObj)
+			{
+				foreach (var device in Devices)
+				{
+					device.Update();
+				}
+			}
 		}
 
 		public static void CloseAll()
@@ -62,38 +70,49 @@ namespace BizHawk.Client.EmuHawk
 
 		readonly Guid _guid;
 		readonly int _stickIdx;
-		JoystickState state = new JoystickState();
+		readonly string _name;
+		readonly GamePadCapabilities _capabilities;
+		GamePadState state = new GamePadState();
 
-		OTK_GamePad(int index)
+		OTK_GamePad(int index, string name, GamePadCapabilities capabilities)
 		{
 			_guid = Guid.NewGuid();
 			_stickIdx = index;
+			_name = name;
+			_capabilities = capabilities;
 			Update();
-			InitializeCallbacks();
+			InitializeButtons();
+			Console.WriteLine("Initialised OpenTK GamePad: " + Name);
+			Console.WriteLine("OpenTK Mapping: " + _name);
 		}
 
 		public void Update()
 		{
-			state = Joystick.GetState(_stickIdx);
+			state = OpenTK.Input.GamePad.GetState(_stickIdx);
 		}
 
 		public IEnumerable<Tuple<string, float>> GetFloats()
-		{
-			for (int pi = 0; pi < 64; pi++)
-				yield return new Tuple<string, float>(pi.ToString(), 10.0f * state.GetAxis(pi));
+		{			
+			yield return new Tuple<string, float>("LeftThumbX", state.ThumbSticks.Left.X);
+			yield return new Tuple<string, float>("LeftThumbY", state.ThumbSticks.Left.Y);
+			yield return new Tuple<string, float>("RightThumbX", state.ThumbSticks.Right.X);
+			yield return new Tuple<string, float>("RightThumbY", state.ThumbSticks.Right.Y);
+			yield return new Tuple<string, float>("LeftTrigger", state.Triggers.Left);
+			yield return new Tuple<string, float>("RightTrigger", state.Triggers.Right);
+			yield break;
 		}
 
 		/// <summary>FOR DEBUGGING ONLY</summary>
-		public JoystickState GetInternalState()
+		public GamePadState GetInternalState()
 		{
 			return state;
 		}
 
-		public string Name { get { return "Joystick " + _stickIdx; } }
-		public string ID { get { return $"OTX{_stickIdx}"; } }
+		public string Name { get { return "Joystick " + _stickIdx + string.Format(" ({0})", _name); } }
+		public string ID { get { return (_stickIdx + 1).ToString(); } }
 		public Guid Guid { get { return _guid; } }
 
-
+		/*
 		public string ButtonName(int index)
 		{
 			return names[index];
@@ -102,60 +121,109 @@ namespace BizHawk.Client.EmuHawk
 		{
 			return actions[index]();
 		}
+		
 		public int NumButtons { get; private set; }
+		
 
 		private readonly List<string> names = new List<string>();
 		private readonly List<Func<bool>> actions = new List<Func<bool>>();
+		*/
+		public readonly List<ButtonObject> buttonObjects = new List<ButtonObject>();
 
-		void AddItem(string _name, Func<bool> callback)
+		void AddItem(string _name, Func<bool> pressed)
 		{
-			names.Add(_name);
-			actions.Add(callback);
-			NumButtons++;
+			//names.Add(_name);
+			//actions.Add(pressed);
+			//NumButtons++;
+
+			ButtonObject b = new ButtonObject
+			{
+				ButtonName = _name,
+				ButtonAction = pressed
+			};
+
+			buttonObjects.Add(b);
 		}
 
-		void InitializeCallbacks()
+		void InitializeButtons()
 		{
-			const int dzp = 400;
-			const int dzn = -400;
+			// OpenTK GamePad axis return float values
+			const float ConversionFactor = 1.0f / short.MaxValue;
+			const float dzp = (short)400 * ConversionFactor;
+			const float dzn = (short)-400 * ConversionFactor;
+			const float dzt = 0.6f; // (short)10 * ConversionFactor;
 
-			names.Clear();
-			actions.Clear();
-			NumButtons = 0;
+			// buttons
+			if (_capabilities.HasAButton) AddItem("A", () => state.Buttons.A == ButtonState.Pressed);
+			if (_capabilities.HasBButton) AddItem("B", () => state.Buttons.B == ButtonState.Pressed);
+			if (_capabilities.HasXButton) AddItem("X", () => state.Buttons.X == ButtonState.Pressed);
+			if (_capabilities.HasYButton) AddItem("Y", () => state.Buttons.Y == ButtonState.Pressed);
+			if (_capabilities.HasBigButton) AddItem("Guide", () => state.Buttons.BigButton == ButtonState.Pressed);
+			if (_capabilities.HasStartButton) AddItem("Start", () => state.Buttons.Start == ButtonState.Pressed);
+			if (_capabilities.HasBackButton) AddItem("Back", () => state.Buttons.Back == ButtonState.Pressed);
+			if (_capabilities.HasLeftStickButton) AddItem("LeftThumb", () => state.Buttons.LeftStick == ButtonState.Pressed);
+			if (_capabilities.HasRightStickButton) AddItem("RightThumb", () => state.Buttons.RightStick == ButtonState.Pressed);
+			if (_capabilities.HasLeftShoulderButton) AddItem("LeftShoulder", () => state.Buttons.LeftShoulder == ButtonState.Pressed);
+			if (_capabilities.HasRightShoulderButton) AddItem("RightShoulder", () => state.Buttons.RightShoulder == ButtonState.Pressed);
 
-			AddItem("X+", () => state.GetAxis(0) >= dzp);
-			AddItem("X-", () => state.GetAxis(0) <= dzn);
-			AddItem("Y+", () => state.GetAxis(1) >= dzp);
-			AddItem("Y-", () => state.GetAxis(1) <= dzn);
-			AddItem("Z+", () => state.GetAxis(2) >= dzp);
-			AddItem("Z-", () => state.GetAxis(2) <= dzn);
+			// dpad
+			if (_capabilities.HasDPadUpButton) AddItem("DpadUp", () => state.DPad.Up == ButtonState.Pressed);
+			if (_capabilities.HasDPadDownButton) AddItem("DpadDown", () => state.DPad.Down == ButtonState.Pressed);
+			if (_capabilities.HasDPadLeftButton) AddItem("DpadLeft", () => state.DPad.Left == ButtonState.Pressed);
+			if (_capabilities.HasDPadRightButton) AddItem("DpadRight", () => state.DPad.Right == ButtonState.Pressed);
 
-			// Enjoy our delicious sliders. They're smaller than regular burgers but cost more.
-
-			int jb = 1;
-			for (int i = 0; i < 64; i++)
+			// sticks
+			if (_capabilities.HasLeftYThumbStick)
 			{
-				AddItem(string.Format("B{0}", jb), () => state.GetButton(i)==ButtonState.Pressed);
-				jb++;
+				AddItem("LStickUp", () => state.ThumbSticks.Left.Y >= dzp);
+				AddItem("LStickDown", () => state.ThumbSticks.Left.Y <= dzn);
+			}
+			if (_capabilities.HasLeftXThumbStick)
+			{
+				AddItem("LStickLeft", () => state.ThumbSticks.Left.X <= dzn);
+				AddItem("LStickRight", () => state.ThumbSticks.Left.X >= dzp);
+			}
+			if (_capabilities.HasRightYThumbStick)
+			{
+				AddItem("RStickUp", () => state.ThumbSticks.Right.Y >= dzp);
+				AddItem("RStickDown", () => state.ThumbSticks.Right.Y <= dzn);
+			}
+			if (_capabilities.HasRightXThumbStick)
+			{
+				AddItem("RStickLeft", () => state.ThumbSticks.Right.X <= dzn);
+				AddItem("RStickRight", () => state.ThumbSticks.Right.X >= dzp);
 			}
 
-			jb = 1;
-			foreach (JoystickHat enval in Enum.GetValues(typeof(JoystickHat)))
-			{
-				AddItem(string.Format("POV{0}U", jb), () => state.GetHat(enval).IsUp);
-				AddItem(string.Format("POV{0}D", jb), () => state.GetHat(enval).IsDown);
-				AddItem(string.Format("POV{0}L", jb), () => state.GetHat(enval).IsLeft);
-				AddItem(string.Format("POV{0}R", jb), () => state.GetHat(enval).IsRight);
-				jb++;
-			}
-		}
+			// triggers
+			if (_capabilities.HasLeftTrigger) AddItem("LeftTrigger", () => state.Triggers.Left > dzt);
+			if (_capabilities.HasRightTrigger) AddItem("RightTrigger", () => state.Triggers.Right > dzt);
 
-		// Note that this does not appear to work at this time. I probably need to have more infos.
-		public void SetVibration(int left, int right)
+		}		
+
+		/// <summary>
+		/// Sets the gamepad's left and right vibration
+		/// We don't currently use this in Bizhawk - do we have any cores that support this?
+		/// </summary>
+		/// <param name="left"></param>
+		/// <param name="right"></param>
+		public void SetVibration(float left, float right)
 		{
-			//Not supported in OTK Joystick. It is supported for OTK Gamepad, but I have to use Joystick for reasons mentioned above.
+			float _l = 0;
+			float _r = 0;
+
+			if (_capabilities.HasLeftVibrationMotor)
+				_l = left;
+			if (_capabilities.HasRightVibrationMotor)
+				_r = right;
+
+			OpenTK.Input.GamePad.SetVibration(_stickIdx, left, right);
 		}
 
+		public class ButtonObject
+		{
+			public string ButtonName;
+			public Func<bool> ButtonAction;
+		}
 	}
 }
 

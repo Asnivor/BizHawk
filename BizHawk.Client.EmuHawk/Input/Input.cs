@@ -132,8 +132,9 @@ namespace BizHawk.Client.EmuHawk
 			{
 				KeyInput.Initialize();
 				IPCKeyInput.Initialize();
-				GamePad.Initialize();
-				GamePad360.Initialize();
+				//GamePad.Initialize();
+				//GamePad360.Initialize();
+				OTK_GamePad.Initialize();
 			}
 			Instance = new Input();
 		}
@@ -340,8 +341,9 @@ namespace BizHawk.Client.EmuHawk
 				}
 				else
 				{
-					GamePad.UpdateAll();
-					GamePad360.UpdateAll();
+					//GamePad.UpdateAll();
+					//GamePad360.UpdateAll();
+					OTK_GamePad.UpdateAll();
 				}
 
 				//this block is going to massively modify data structures that the binding method uses, so we have to lock it all
@@ -360,9 +362,13 @@ namespace BizHawk.Client.EmuHawk
 						//analyze OTK xinput (libinput?)
 						foreach (var pad in OTK_GamePad.EnumerateDevices())
 						{
-							string xname = pad.ID + " ";
-							for (int b = 0; b < pad.NumButtons; b++)
-								HandleButton(xname + pad.ButtonName(b), pad.Pressed(b));
+							string xname = "X" + pad.ID + " ";
+
+							foreach (var but in pad.buttonObjects)
+							{
+								HandleButton(xname + but.ButtonName, but.ButtonAction());
+							}
+
 							foreach (var sv in pad.GetFloats())
 							{
 								string n = xname + sv.Item1;
