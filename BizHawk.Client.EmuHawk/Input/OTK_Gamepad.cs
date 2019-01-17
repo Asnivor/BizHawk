@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTK.Input;
 
 namespace BizHawk.Client.EmuHawk
@@ -124,11 +125,13 @@ namespace BizHawk.Client.EmuHawk
 		/// Gamepad Device state information - updated constantly
 		/// </summary>
 		GamePadState state = new GamePadState();
+		GamePadState oldState = new GamePadState();
 
 		/// <summary>
 		/// Joystick Device state information - updated constantly
 		/// </summary>
 		JoystickState jState = new JoystickState();
+		JoystickState oldJstate = new JoystickState();
 
 		OTK_GamePad(int index, int playerIndex)
 		{
@@ -170,36 +173,74 @@ namespace BizHawk.Client.EmuHawk
 		public void Update()
 		{
 			// update both here just in case
-			state = OpenTK.Input.GamePad.GetState(_deviceIndex);
-			jState = Joystick.GetState(_deviceIndex);
+			var tmpState = OpenTK.Input.GamePad.GetState(_deviceIndex);
+			if (!tmpState.Equals(state))
+			{
+				state = tmpState;
+				DebugGamepadState();
+			}
+			
+			var tmpJstate = Joystick.GetState(_deviceIndex);
+			if (!tmpJstate.Equals(jState))
+			{
+				jState = tmpJstate;
+				DebugJoystickState();
+			}			
+		}
+
+		private void DebugGamepadState()
+		{
+			Debug.WriteLine("GamePad State:\t" + state.ToString());
+		}
+
+		private void DebugJoystickState()
+		{
+			Debug.WriteLine("Joystick State:\t" + jState.ToString());
+		}
+
+		/// <summary>
+		/// The things that use GetFloats() (analog controls) appear to require values -10000 to 10000
+		/// rather than the -1.0 to 1.0 that OpenTK returns (although even then the results may be slightly outside of these bounds)
+		/// Note: is there a better/more perfomant way to do this?
+		/// </summary>
+		/// <param name="num"></param>
+		/// <returns></returns>
+		private float SetBounds(float num)
+		{
+			if (num > 1)
+				num = 1;
+			if (num < -1)
+				num = -1;
+
+			return num * 10000;
 		}
 
 		public IEnumerable<Tuple<string, float>> GetFloats()
 		{
-			if (!_gamePadCapabilities.HasValue || !_gamePadCapabilities.Value.IsMapped)
+			if (_gamePadCapabilities.HasValue && _gamePadCapabilities.Value.IsMapped)
 			{
-				yield return new Tuple<string, float>("LeftThumbX", state.ThumbSticks.Left.X);
-				yield return new Tuple<string, float>("LeftThumbY", state.ThumbSticks.Left.Y);
-				yield return new Tuple<string, float>("RightThumbX", state.ThumbSticks.Right.X);
-				yield return new Tuple<string, float>("RightThumbY", state.ThumbSticks.Right.Y);
-				yield return new Tuple<string, float>("LeftTrigger", state.Triggers.Left);
-				yield return new Tuple<string, float>("RightTrigger", state.Triggers.Right);
+				// automapping identified - use OpenTK.Input.GamePad class
+				yield return new Tuple<string, float>("LeftThumbX", SetBounds(state.ThumbSticks.Left.X));
+				yield return new Tuple<string, float>("LeftThumbY", SetBounds(state.ThumbSticks.Left.Y));
+				yield return new Tuple<string, float>("RightThumbX", SetBounds(state.ThumbSticks.Right.X));
+				yield return new Tuple<string, float>("RightThumbY", SetBounds(state.ThumbSticks.Right.Y));
+				yield return new Tuple<string, float>("LeftTrigger", SetBounds(state.Triggers.Left));
+				yield return new Tuple<string, float>("RightTrigger", SetBounds(state.Triggers.Right));
 				yield break;
 			}
 			else
 			{
-				for (int i = 0; i < _joystickCapabilities.Value.AxisCount; i++)
-				{
-					if (i <= 2)
-					{
-						yield return new Tuple<string, float>("AXIS " + aNames[i], jState.GetAxis(i));
-					}
-					else
-					{
-						yield return new Tuple<string, float>("AXIS " + i, jState.GetAxis(i));
-					}
-					yield break;
-				}
+				// use OpenTK.Input.Joystick class
+				yield return new Tuple<string, float>("X", SetBounds(jState.GetAxis(0)));
+				yield return new Tuple<string, float>("Y", SetBounds(jState.GetAxis(1)));
+				yield return new Tuple<string, float>("Z", SetBounds(jState.GetAxis(2)));
+				yield return new Tuple<string, float>("W", SetBounds(jState.GetAxis(3)));
+				yield return new Tuple<string, float>("V", SetBounds(jState.GetAxis(4)));
+				yield return new Tuple<string, float>("S", SetBounds(jState.GetAxis(5)));
+				yield return new Tuple<string, float>("Q", SetBounds(jState.GetAxis(6)));
+				yield return new Tuple<string, float>("P", SetBounds(jState.GetAxis(7)));
+				yield return new Tuple<string, float>("N", SetBounds(jState.GetAxis(8)));
+				yield break;
 			}
 		}
 
@@ -254,10 +295,31 @@ namespace BizHawk.Client.EmuHawk
 
 		void InitializeJoystickControls()
 		{
+			// OpenTK GamePad axis return float values (as opposed to the shorts of SlimDX)
 			const float ConversionFactor = 1.0f / short.MaxValue;
 			const float dzp = (short)400 * ConversionFactor;
 			const float dzn = (short)-400 * ConversionFactor;
 			const float dzt = 0.6f;
+
+			// axis		
+			AddItem("X+", () => jState.GetAxis(0) >= dzp);
+			AddItem("X-", () => jState.GetAxis(0) <= dzn);
+			AddItem("Y+", () => jState.GetAxis(1) >= dzp);
+			AddItem("Y-", () => jState.GetAxis(1) <= dzn);			
+			AddItem("Z+", () => jState.GetAxis(2) >= dzp);
+			AddItem("Z-", () => jState.GetAxis(2) <= dzn);
+			AddItem("W+", () => jState.GetAxis(3) >= dzp);
+			AddItem("W-", () => jState.GetAxis(3) <= dzn);
+			AddItem("V+", () => jState.GetAxis(4) >= dzp);
+			AddItem("V-", () => jState.GetAxis(4) <= dzn);
+			AddItem("S+", () => jState.GetAxis(5) >= dzp);
+			AddItem("S-", () => jState.GetAxis(5) <= dzn);
+			AddItem("Q+", () => jState.GetAxis(6) >= dzp);
+			AddItem("Q-", () => jState.GetAxis(6) <= dzn);
+			AddItem("P+", () => jState.GetAxis(7) >= dzp);
+			AddItem("P-", () => jState.GetAxis(7) <= dzn);
+			AddItem("N+", () => jState.GetAxis(8) >= dzp);
+			AddItem("N-", () => jState.GetAxis(8) <= dzn);	// should be enough axis
 
 			// buttons
 			for (int i = 0; i < _joystickCapabilities.Value.ButtonCount; i++)
@@ -275,33 +337,6 @@ namespace BizHawk.Client.EmuHawk
 				AddItem(string.Format("POV{0}L", i + 1), () => hat.IsLeft);
 				AddItem(string.Format("POV{0}R", i + 1), () => hat.IsRight);
 			}
-
-			// axis			
-			for (int i = 0; i < _joystickCapabilities.Value.AxisCount; i++)
-			{
-				switch (i)
-				{
-					// X
-					case 0:
-						AddItem("X+", () => jState.GetAxis(i) >= dzp);
-						AddItem("X-", () => jState.GetAxis(i) <= dzn);
-						break;
-					// Y
-					case 1:
-						AddItem("Y+", () => jState.GetAxis(i) >= dzp);
-						AddItem("Y-", () => jState.GetAxis(i) <= dzn);
-						break;
-					// Z
-					case 2:
-						AddItem("Z+", () => jState.GetAxis(i) >= dzp);
-						AddItem("Z-", () => jState.GetAxis(i) <= dzn);
-						break;
-					default:
-						AddItem(string.Format("AXIS{0}+", i), () => jState.GetAxis(i) >= dzp);
-						AddItem(string.Format("AXIS{0}-", i), () => jState.GetAxis(i) <= dzn);
-						break;
-				}
-			}	
 		}
 
 		void InitializeGamePadControls()

@@ -132,9 +132,9 @@ namespace BizHawk.Client.EmuHawk
 			{
 				KeyInput.Initialize();
 				IPCKeyInput.Initialize();
-				//GamePad.Initialize();
-				//GamePad360.Initialize();
-				OTK_GamePad.Initialize();
+				GamePad.Initialize();
+				GamePad360.Initialize();
+				//OTK_GamePad.Initialize();
 			}
 			Instance = new Input();
 		}
@@ -341,9 +341,9 @@ namespace BizHawk.Client.EmuHawk
 				}
 				else
 				{
-					//GamePad.UpdateAll();
-					//GamePad360.UpdateAll();
-					OTK_GamePad.UpdateAll();
+					GamePad.UpdateAll();
+					GamePad360.UpdateAll();
+					//OTK_GamePad.UpdateAll();
 				}
 
 				//this block is going to massively modify data structures that the binding method uses, so we have to lock it all
@@ -359,19 +359,19 @@ namespace BizHawk.Client.EmuHawk
 					{
 						//FloatValues.Clear();
 
-						//analyze OTK xinput (libinput?)
+						//analyze OTK
 						foreach (var pad in OTK_GamePad.EnumerateDevices())
 						{
-							string xname = "X" + pad.ID + " ";
+							string xname = "T" + pad.ID + " ";
 
 							foreach (var but in pad.buttonObjects)
-							{
+							{								
 								HandleButton(xname + but.ButtonName, but.ButtonAction());
 							}
-
+							
 							foreach (var sv in pad.GetFloats())
 							{
-								string n = xname + sv.Item1;
+								string n = xname + sv.Item1 + " Axis";
 								float f = sv.Item2;
 								if (trackdeltas)
 									FloatDeltas[n] += Math.Abs(f - FloatValues[n]);
