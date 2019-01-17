@@ -313,7 +313,7 @@ namespace BizHawk.Client.EmuHawk
 			const float ConversionFactor = 1.0f / short.MaxValue;
 			const float dzp = (short)400 * ConversionFactor;
 			const float dzn = (short)-400 * ConversionFactor;
-			const float dzt = 0.6f;
+			//const float dzt = 0.6f;
 
 			// axis		
 			AddItem("X+", () => jState.GetAxis(0) >= dzp);
@@ -343,14 +343,22 @@ namespace BizHawk.Client.EmuHawk
 			}
 
 			// hats
-			for (int i = 0; i < _joystickCapabilities.Value.HatCount; i++)
-			{
-				JoystickHatState hat = jState.GetHat((JoystickHat)i);
-				AddItem(string.Format("POV{0}U", i + 1), () => hat.IsUp);
-				AddItem(string.Format("POV{0}D", i + 1), () => hat.IsDown);
-				AddItem(string.Format("POV{0}L", i + 1), () => hat.IsLeft);
-				AddItem(string.Format("POV{0}R", i + 1), () => hat.IsRight);
-			}
+			AddItem("POV1U", () => jState.GetHat(JoystickHat.Hat0).IsUp);
+			AddItem("POV1D", () => jState.GetHat(JoystickHat.Hat0).IsDown);
+			AddItem("POV1L", () => jState.GetHat(JoystickHat.Hat0).IsLeft);
+			AddItem("POV1R", () => jState.GetHat(JoystickHat.Hat0).IsRight);
+			AddItem("POV2U", () => jState.GetHat(JoystickHat.Hat1).IsUp);
+			AddItem("POV2D", () => jState.GetHat(JoystickHat.Hat1).IsDown);
+			AddItem("POV2L", () => jState.GetHat(JoystickHat.Hat1).IsLeft);
+			AddItem("POV2R", () => jState.GetHat(JoystickHat.Hat1).IsRight);
+			AddItem("POV3U", () => jState.GetHat(JoystickHat.Hat2).IsUp);
+			AddItem("POV3D", () => jState.GetHat(JoystickHat.Hat2).IsDown);
+			AddItem("POV3L", () => jState.GetHat(JoystickHat.Hat2).IsLeft);
+			AddItem("POV3R", () => jState.GetHat(JoystickHat.Hat2).IsRight);
+			AddItem("POV4U", () => jState.GetHat(JoystickHat.Hat3).IsUp);
+			AddItem("POV4D", () => jState.GetHat(JoystickHat.Hat3).IsDown);
+			AddItem("POV4L", () => jState.GetHat(JoystickHat.Hat3).IsLeft);
+			AddItem("POV4R", () => jState.GetHat(JoystickHat.Hat3).IsRight);			
 		}
 
 		void InitializeGamePadControls()
