@@ -176,13 +176,31 @@ namespace BizHawk.Client.EmuHawk
 
 		public IEnumerable<Tuple<string, float>> GetFloats()
 		{
-			yield return new Tuple<string, float>("LeftThumbX", state.ThumbSticks.Left.X);
-			yield return new Tuple<string, float>("LeftThumbY", state.ThumbSticks.Left.Y);
-			yield return new Tuple<string, float>("RightThumbX", state.ThumbSticks.Right.X);
-			yield return new Tuple<string, float>("RightThumbY", state.ThumbSticks.Right.Y);
-			yield return new Tuple<string, float>("LeftTrigger", state.Triggers.Left);
-			yield return new Tuple<string, float>("RightTrigger", state.Triggers.Right);
-			yield break;
+			if (!_gamePadCapabilities.HasValue || !_gamePadCapabilities.Value.IsMapped)
+			{
+				yield return new Tuple<string, float>("LeftThumbX", state.ThumbSticks.Left.X);
+				yield return new Tuple<string, float>("LeftThumbY", state.ThumbSticks.Left.Y);
+				yield return new Tuple<string, float>("RightThumbX", state.ThumbSticks.Right.X);
+				yield return new Tuple<string, float>("RightThumbY", state.ThumbSticks.Right.Y);
+				yield return new Tuple<string, float>("LeftTrigger", state.Triggers.Left);
+				yield return new Tuple<string, float>("RightTrigger", state.Triggers.Right);
+				yield break;
+			}
+			else
+			{
+				for (int i = 0; i < _joystickCapabilities.Value.AxisCount; i++)
+				{
+					if (i <= 2)
+					{
+						yield return new Tuple<string, float>("AXIS " + aNames[i], jState.GetAxis(i));
+					}
+					else
+					{
+						yield return new Tuple<string, float>("AXIS " + i, jState.GetAxis(i));
+					}
+					yield break;
+				}
+			}
 		}
 
 		public string Name { get { return "Joystick " + _playerIndex + string.Format(" ({0})", _name); } }
@@ -232,6 +250,8 @@ namespace BizHawk.Client.EmuHawk
 			}
 		}
 
+		string[] aNames = new string[] { "X", "Y", "Z", "AXIS" };
+
 		void InitializeJoystickControls()
 		{
 			const float ConversionFactor = 1.0f / short.MaxValue;
@@ -256,8 +276,7 @@ namespace BizHawk.Client.EmuHawk
 				AddItem(string.Format("POV{0}R", i + 1), () => hat.IsRight);
 			}
 
-			// axis
-			string[] aNames = new string[] { "X", "Y", "Z", "AXIS" };
+			// axis			
 			for (int i = 0; i < _joystickCapabilities.Value.AxisCount; i++)
 			{
 				switch (i)
