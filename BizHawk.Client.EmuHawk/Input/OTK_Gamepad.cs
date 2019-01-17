@@ -107,19 +107,9 @@ namespace BizHawk.Client.EmuHawk
 		readonly GamePadCapabilities? _gamePadCapabilities;
 
 		/// <summary>
-		/// Has OpenTK detected the device using the GamePad class?
-		/// </summary>
-		readonly bool _hasGamepad;
-
-		/// <summary>
 		/// The object as returned by OpenTK.Input.Joystick.GetCapabilities();
 		/// </summary>
 		readonly JoystickCapabilities? _joystickCapabilities;
-
-		/// <summary>
-		/// Has OpenTK detected the device using the Joystick class?
-		/// </summary>
-		readonly bool _hasJoystick;
 
 		/// <summary>
 		/// Public check on whether mapped gamepad config is being used
@@ -139,13 +129,11 @@ namespace BizHawk.Client.EmuHawk
 		/// Gamepad Device state information - updated constantly
 		/// </summary>
 		GamePadState state = new GamePadState();
-		GamePadState oldState = new GamePadState();
 
 		/// <summary>
 		/// Joystick Device state information - updated constantly
 		/// </summary>
 		JoystickState jState = new JoystickState();
-		JoystickState oldJstate = new JoystickState();
 
 		OTK_GamePad(int index, int playerIndex)
 		{
@@ -291,6 +279,11 @@ namespace BizHawk.Client.EmuHawk
 		/// </summary>
 		void InitializeMappings()
 		{
+			if (_guidObtained)
+			{
+				// placeholder for if/when we figure out how to supply OpenTK with custom GamePadConfigurationDatabase entries
+			}
+
 			// currently OpenTK has an internal database of mappings for the GamePad class: https://github.com/opentk/opentk/blob/master/src/OpenTK/Input/GamePadConfigurationDatabase.cs
 			// if an internal mapping is detected, use that. otherwise, use the joystick class to instantiate the controller
 			if (!_gamePadCapabilities.HasValue || !_gamePadCapabilities.Value.IsMapped)
