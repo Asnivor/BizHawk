@@ -27,8 +27,8 @@ namespace BizHawk.Client.EmuHawk
 
 			int playerCount = 0;
 
-			lock (_syncObj)
-			{
+			//lock (_syncObj)
+			//{
 				for (int i = 0; i < MAX_GAMEPADS; i++)
 				{
 					if (/*OpenTK.Input.GamePad.GetState(i).IsConnected || */Joystick.GetState(i).IsConnected)
@@ -38,7 +38,7 @@ namespace BizHawk.Client.EmuHawk
 						Devices.Add(ogp);
 					}
 				}
-			}
+			//}
 		}
 
 		public static IEnumerable<OTK_GamePad> EnumerateDevices()
