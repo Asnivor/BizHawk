@@ -132,9 +132,9 @@ namespace BizHawk.Client.EmuHawk
 			{
 				KeyInput.Initialize();
 				IPCKeyInput.Initialize();
-				//GamePad.Initialize();
-				//GamePad360.Initialize();
-				OTK_GamePad.Initialize();
+				GamePad.Initialize();
+				GamePad360.Initialize();
+				//OTK_GamePad.Initialize();
 			}
 			Instance = new Input();
 		}
@@ -341,9 +341,9 @@ namespace BizHawk.Client.EmuHawk
 				}
 				else
 				{
-					//GamePad.UpdateAll();
-					//GamePad360.UpdateAll();
-					OTK_GamePad.UpdateAll();
+					GamePad.UpdateAll();
+					GamePad360.UpdateAll();
+					//OTK_GamePad.UpdateAll();
 				}
 
 				//this block is going to massively modify data structures that the binding method uses, so we have to lock it all
