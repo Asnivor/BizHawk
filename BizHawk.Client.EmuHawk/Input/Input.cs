@@ -362,7 +362,8 @@ namespace BizHawk.Client.EmuHawk
 						//analyze OTK
 						foreach (var pad in OTK_GamePad.EnumerateDevices())
 						{
-							string xname = "T" + pad.ID + " ";
+							string cType = pad.MappedGamePad ? "X" : "J";
+							string xname = cType + pad.ID + " ";
 
 							foreach (var but in pad.buttonObjects)
 							{								

@@ -122,6 +122,20 @@ namespace BizHawk.Client.EmuHawk
 		readonly bool _hasJoystick;
 
 		/// <summary>
+		/// Public check on whether mapped gamepad config is being used
+		/// </summary>
+		public bool MappedGamePad
+		{
+			get
+			{
+				if (_gamePadCapabilities.HasValue && _gamePadCapabilities.Value.IsMapped)
+					return true;
+
+				return false;
+			}
+		}
+
+		/// <summary>
 		/// Gamepad Device state information - updated constantly
 		/// </summary>
 		GamePadState state = new GamePadState();
