@@ -242,6 +242,13 @@ namespace BizHawk.Client.EmuHawk
 				yield return new Tuple<string, float>("Q", SetBounds(jState.GetAxis(6)));
 				yield return new Tuple<string, float>("P", SetBounds(jState.GetAxis(7)));
 				yield return new Tuple<string, float>("N", SetBounds(jState.GetAxis(8)));
+
+				for (int i = 9; i < 64; i++)
+				{
+					int j = i;
+					yield return new Tuple<string, float>(string.Format("Axis{0}", j.ToString()), SetBounds(jState.GetAxis(j)));
+				}
+
 				yield break;
 			}
 		}
@@ -286,26 +293,24 @@ namespace BizHawk.Client.EmuHawk
 
 			// currently OpenTK has an internal database of mappings for the GamePad class: https://github.com/opentk/opentk/blob/master/src/OpenTK/Input/GamePadConfigurationDatabase.cs
 			// if an internal mapping is detected, use that. otherwise, use the joystick class to instantiate the controller
-			if (!_gamePadCapabilities.HasValue || !_gamePadCapabilities.Value.IsMapped)
+			if (_gamePadCapabilities.HasValue && _gamePadCapabilities.Value.IsMapped)
+			{
+				// internal map detected - use the GamePad class
+				InitializeGamePadControls();				
+			}
+			else
 			{
 				// no internal map detected - use the joystick class
 				InitializeJoystickControls();
 			}
-			else
-			{
-				// internal map detected - use the GamePad class
-				InitializeGamePadControls();
-			}
 		}
-
-		string[] aNames = new string[] { "X", "Y", "Z", "AXIS" };
 
 		void InitializeJoystickControls()
 		{
 			// OpenTK GamePad axis return float values (as opposed to the shorts of SlimDX)
 			const float ConversionFactor = 1.0f / short.MaxValue;
-			const float dzp = (short)400 * ConversionFactor;
-			const float dzn = (short)-400 * ConversionFactor;
+			const float dzp = (short)4000 * ConversionFactor;
+			const float dzn = (short)-4000 * ConversionFactor;
 			//const float dzt = 0.6f;
 
 			// axis		
@@ -326,7 +331,14 @@ namespace BizHawk.Client.EmuHawk
 			AddItem("P+", () => jState.GetAxis(7) >= dzp);
 			AddItem("P-", () => jState.GetAxis(7) <= dzn);
 			AddItem("N+", () => jState.GetAxis(8) >= dzp);
-			AddItem("N-", () => jState.GetAxis(8) <= dzn);	// should be enough axis
+			AddItem("N-", () => jState.GetAxis(8) <= dzn);
+			// should be enough axis, but just in case:
+			for (int i = 9; i < 64; i++)
+			{
+				int j = i;
+				AddItem(string.Format("Axis{0}+", j.ToString()), () => jState.GetAxis(j) >= dzp);
+				AddItem(string.Format("Axis{0}-", j.ToString()), () => jState.GetAxis(j) <= dzn);
+			}
 
 			// buttons
 			for (int i = 0; i < _joystickCapabilities.Value.ButtonCount; i++)
@@ -358,54 +370,42 @@ namespace BizHawk.Client.EmuHawk
 		{
 			// OpenTK GamePad axis return float values (as opposed to the shorts of SlimDX)
 			const float ConversionFactor = 1.0f / short.MaxValue;
-			const float dzp = (short)400 * ConversionFactor;
-			const float dzn = (short)-400 * ConversionFactor;
+			const float dzp = (short)4000 * ConversionFactor;
+			const float dzn = (short)-4000 * ConversionFactor;
 			const float dzt = 0.6f;
 
 			// buttons
-			if (_gamePadCapabilities.Value.HasAButton) AddItem("A", () => state.Buttons.A == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasBButton) AddItem("B", () => state.Buttons.B == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasXButton) AddItem("X", () => state.Buttons.X == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasYButton) AddItem("Y", () => state.Buttons.Y == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasBigButton) AddItem("Guide", () => state.Buttons.BigButton == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasStartButton) AddItem("Start", () => state.Buttons.Start == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasBackButton) AddItem("Back", () => state.Buttons.Back == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasLeftStickButton) AddItem("LeftThumb", () => state.Buttons.LeftStick == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasRightStickButton) AddItem("RightThumb", () => state.Buttons.RightStick == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasLeftShoulderButton) AddItem("LeftShoulder", () => state.Buttons.LeftShoulder == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasRightShoulderButton) AddItem("RightShoulder", () => state.Buttons.RightShoulder == ButtonState.Pressed);
+			AddItem("A", () => state.Buttons.A == ButtonState.Pressed);
+			AddItem("B", () => state.Buttons.B == ButtonState.Pressed);
+			AddItem("X", () => state.Buttons.X == ButtonState.Pressed);
+			AddItem("Y", () => state.Buttons.Y == ButtonState.Pressed);
+			AddItem("Guide", () => state.Buttons.BigButton == ButtonState.Pressed);
+			AddItem("Start", () => state.Buttons.Start == ButtonState.Pressed);
+			AddItem("Back", () => state.Buttons.Back == ButtonState.Pressed);
+			AddItem("LeftThumb", () => state.Buttons.LeftStick == ButtonState.Pressed);
+			AddItem("RightThumb", () => state.Buttons.RightStick == ButtonState.Pressed);
+			AddItem("LeftShoulder", () => state.Buttons.LeftShoulder == ButtonState.Pressed);
+			AddItem("RightShoulder", () => state.Buttons.RightShoulder == ButtonState.Pressed);
 
 			// dpad
-			if (_gamePadCapabilities.Value.HasDPadUpButton) AddItem("DpadUp", () => state.DPad.Up == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasDPadDownButton) AddItem("DpadDown", () => state.DPad.Down == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasDPadLeftButton) AddItem("DpadLeft", () => state.DPad.Left == ButtonState.Pressed);
-			if (_gamePadCapabilities.Value.HasDPadRightButton) AddItem("DpadRight", () => state.DPad.Right == ButtonState.Pressed);
+			AddItem("DpadUp", () => state.DPad.Up == ButtonState.Pressed);
+			AddItem("DpadDown", () => state.DPad.Down == ButtonState.Pressed);
+			AddItem("DpadLeft", () => state.DPad.Left == ButtonState.Pressed);
+			AddItem("DpadRight", () => state.DPad.Right == ButtonState.Pressed);
 
 			// sticks
-			if (_gamePadCapabilities.Value.HasLeftYThumbStick)
-			{
-				AddItem("LStickUp", () => state.ThumbSticks.Left.Y >= dzp);
-				AddItem("LStickDown", () => state.ThumbSticks.Left.Y <= dzn);
-			}
-			if (_gamePadCapabilities.Value.HasLeftXThumbStick)
-			{
-				AddItem("LStickLeft", () => state.ThumbSticks.Left.X <= dzn);
-				AddItem("LStickRight", () => state.ThumbSticks.Left.X >= dzp);
-			}
-			if (_gamePadCapabilities.Value.HasRightYThumbStick)
-			{
-				AddItem("RStickUp", () => state.ThumbSticks.Right.Y >= dzp);
-				AddItem("RStickDown", () => state.ThumbSticks.Right.Y <= dzn);
-			}
-			if (_gamePadCapabilities.Value.HasRightXThumbStick)
-			{
-				AddItem("RStickLeft", () => state.ThumbSticks.Right.X <= dzn);
-				AddItem("RStickRight", () => state.ThumbSticks.Right.X >= dzp);
-			}
+			AddItem("LStickUp", () => state.ThumbSticks.Left.Y >= dzp);
+			AddItem("LStickDown", () => state.ThumbSticks.Left.Y <= dzn);
+			AddItem("LStickLeft", () => state.ThumbSticks.Left.X <= dzn);
+			AddItem("LStickRight", () => state.ThumbSticks.Left.X >= dzp);
+			AddItem("RStickUp", () => state.ThumbSticks.Right.Y >= dzp);
+			AddItem("RStickDown", () => state.ThumbSticks.Right.Y <= dzn);
+			AddItem("RStickLeft", () => state.ThumbSticks.Right.X <= dzn);
+			AddItem("RStickRight", () => state.ThumbSticks.Right.X >= dzp);
 
 			// triggers
-			if (_gamePadCapabilities.Value.HasLeftTrigger) AddItem("LeftTrigger", () => state.Triggers.Left > dzt);
-			if (_gamePadCapabilities.Value.HasRightTrigger) AddItem("RightTrigger", () => state.Triggers.Right > dzt);
+			AddItem("LeftTrigger", () => state.Triggers.Left > dzt);
+			AddItem("RightTrigger", () => state.Triggers.Right > dzt);
 		}
 
 		/// <summary>
