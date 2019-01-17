@@ -31,7 +31,7 @@ namespace BizHawk.Client.EmuHawk
 			{
 				for (int i = 0; i < MAX_GAMEPADS; i++)
 				{
-					if (OpenTK.Input.GamePad.GetState(i).IsConnected || Joystick.GetState(i).IsConnected)
+					if (/*OpenTK.Input.GamePad.GetState(i).IsConnected || */Joystick.GetState(i).IsConnected)
 					{
 						Console.WriteLine(string.Format("OTK GamePad/Joystick index: {0}", i));
 						OTK_GamePad ogp = new OTK_GamePad(i, ++playerCount);
