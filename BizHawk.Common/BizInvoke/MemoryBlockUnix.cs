@@ -21,7 +21,7 @@ namespace BizHawk.Common.BizInvoke
 			if (!WaterboxUtils.Aligned(start)) throw new ArgumentOutOfRangeException();
 			if (size == 0) throw new ArgumentOutOfRangeException();
 			size = WaterboxUtils.AlignUp(size);
-			_fd = Kernel.memfd_create("MemoryBlockUnix", 0);
+			_fd = memfd_create("MemoryBlockUnix", 0);
 			if (_fd == -1) throw new InvalidOperationException("memfd_create() returned -1");
 			Start = start;
 			End = start + size;
@@ -35,7 +35,7 @@ namespace BizHawk.Common.BizInvoke
 		public override void Activate()
 		{
 			if (Active) throw new InvalidOperationException("Already active");
-			if (Kernel.mmap(Z.US(Start), Z.UU(Size), Kernel.Protection.Read | Kernel.Protection.Write | Kernel.Protection.Execute, 16, _fd, IntPtr.Zero) != Z.US(Start))
+			if (mmap(Z.US(Start), Z.UU(Size), MemoryProtection.Read | MemoryProtection.Write | MemoryProtection.Execute, 16, _fd, IntPtr.Zero) != Z.US(Start))
 				throw new InvalidOperationException("mmap() returned NULL");
 			ProtectAll();
 			Active = true;
@@ -48,7 +48,7 @@ namespace BizHawk.Common.BizInvoke
 		{
 			if (!Active)
 				throw new InvalidOperationException("Not active");
-			if (Kernel.munmap(Z.US(Start), Z.UU(Size)) != 0)
+			if (munmap(Z.US(Start), Z.UU(Size)) != 0)
 				throw new InvalidOperationException("munmap() returned -1");
 			Active = false;
 		}
@@ -65,7 +65,7 @@ namespace BizHawk.Common.BizInvoke
 
 			// temporarily switch the entire block to `R`: in case some areas are unreadable, we don't want
 			// that to complicate things
-			if (Kernel.mprotect(Z.US(Start), Z.UU(Size), Kernel.Protection.Read) != 0)
+			if (mprotect(Z.US(Start), Z.UU(Size), MemoryProtection.Read) != 0)
 				throw new InvalidOperationException("mprotect() returned -1!");
 
 			_snapshot = new byte[Size];
@@ -86,21 +86,21 @@ namespace BizHawk.Common.BizInvoke
 			if (!Active)
 				throw new InvalidOperationException("Not active");
 			// temporarily switch the entire block to `R`
-			if (Kernel.mprotect(Z.US(Start), Z.UU(Size), Kernel.Protection.Read) != 0)
+			if (mprotect(Z.US(Start), Z.UU(Size), MemoryProtection.Read) != 0)
 				throw new InvalidOperationException("mprotect() returned -1!");
 			var ret = WaterboxUtils.Hash(GetStream(Start, Size, false));
 			ProtectAll();
 			return ret;
 		}
 
-		private static Kernel.Protection GetKernelMemoryProtectionValue(Protection prot)
+		private static MemoryProtection GetMemoryProtectionValue(Protection prot)
 		{
 			switch (prot)
 			{
 				case Protection.None: return 0;
-				case Protection.R: return Kernel.Protection.Read;
-				case Protection.RW: return Kernel.Protection.Read | Kernel.Protection.Write;
-				case Protection.RX: return Kernel.Protection.Read | Kernel.Protection.Execute;
+				case Protection.R: return MemoryProtection.Read;
+				case Protection.RW: return MemoryProtection.Read | MemoryProtection.Write;
+				case Protection.RX: return MemoryProtection.Read | MemoryProtection.Execute;
 			}
 			throw new ArgumentOutOfRangeException(nameof(prot));
 		}
@@ -115,10 +115,10 @@ namespace BizHawk.Common.BizInvoke
 			{
 				if (i == _pageData.Length - 1 || _pageData[i] != _pageData[i + 1])
 				{
-					var p = GetKernelMemoryProtectionValue(_pageData[i]);
+					var p = GetMemoryProtectionValue(_pageData[i]);
 					ulong zstart = GetStartAddr(ps);
 					ulong zend = GetStartAddr(i + 1);
-					if (Kernel.mprotect(Z.US(zstart), Z.UU(zend - zstart), p) != 0)
+					if (mprotect(Z.US(zstart), Z.UU(zend - zstart), p) != 0)
 						throw new InvalidOperationException("mprotect() returned -1!");
 					ps = i + 1;
 				}
@@ -135,7 +135,7 @@ namespace BizHawk.Common.BizInvoke
 			int pstart = GetPage(start);
 			int pend = GetPage(start + length - 1);
 
-			var p = GetKernelMemoryProtectionValue(prot);
+			var p = GetMemoryProtectionValue(prot);
 			for (int i = pstart; i <= pend; i++)
 				_pageData[i] = prot; // also store the value for later use
 
@@ -145,7 +145,7 @@ namespace BizHawk.Common.BizInvoke
 				var computedEnd = WaterboxUtils.AlignUp(start + length);
 				var computedLength = computedEnd - computedStart;
 
-				if (Kernel.mprotect(Z.US(computedStart), Z.UU(computedLength), p) != 0)
+				if (mprotect(Z.US(computedStart), Z.UU(computedLength), p) != 0)
 					throw new InvalidOperationException("mprotect() returned -1!");
 			}
 		}
@@ -155,7 +155,7 @@ namespace BizHawk.Common.BizInvoke
 			if (_fd != 0)
 			{
 				if (Active) Deactivate();
-				Kernel.close(_fd);
+				close(_fd);
 				_fd = -1;
 			}
 		}
@@ -165,35 +165,35 @@ namespace BizHawk.Common.BizInvoke
 			Dispose(false);
 		}
 
-		private static class Kernel
+		[DllImport("libc.so.6")]
+		private static extern int close(int fd);
+
+		[DllImport("libc.so.6")]
+		private static extern int memfd_create(string name, uint flags);
+
+		[DllImport("libc.so.6")]
+		private static extern IntPtr mmap(IntPtr addr, UIntPtr length, int prot, int flags, int fd, IntPtr offset);
+		private static IntPtr mmap(IntPtr addr, UIntPtr length, MemoryProtection prot, int flags, int fd, IntPtr offset)
 		{
-			[DllImport("libc.so.6")]
-			public static extern int memfd_create(string name, uint flags);
-			[DllImport("libc.so.6")]
-			public static extern int close(int fd);
-			[DllImport("libc.so.6")]
-			public static extern IntPtr mmap(IntPtr addr, UIntPtr length, int prot, int flags, int fd, IntPtr offset);
-			[DllImport("libc.so.6")]
-			public static extern int munmap(IntPtr addr, UIntPtr length);
-			[DllImport("libc.so.6")]
-			public static extern int mprotect(IntPtr addr, UIntPtr len, int prot);
+			return mmap(addr, length, (int) prot, flags, fd, offset);
+		}
 
-			public static IntPtr mmap(IntPtr addr, UIntPtr length, Protection prot, int flags, int fd, IntPtr offset)
-			{
-				return mmap(addr, length, (int) prot, flags, fd, offset);
-			}
-			public static int mprotect(IntPtr addr, UIntPtr len, Protection prot)
-			{
-				return mprotect(addr, len, (int) prot);
-			}
+		[DllImport("libc.so.6")]
+		private static extern int mprotect(IntPtr addr, UIntPtr len, int prot);
+		private static int mprotect(IntPtr addr, UIntPtr len, MemoryProtection prot)
+		{
+			return mprotect(addr, len, (int) prot);
+		}
 
-			[Flags]
-			public enum Protection : int
-			{
-				Read = 0x1,
-				Write = 0x2,
-				Execute = 0x4
-			}
+		[DllImport("libc.so.6")]
+		private static extern int munmap(IntPtr addr, UIntPtr length);
+
+		[Flags]
+		private enum MemoryProtection : int
+		{
+			Read = 0x1,
+			Write = 0x2,
+			Execute = 0x4
 		}
 	}
 }
