@@ -103,7 +103,48 @@ namespace BizHawk.Client.EmuHawk
 
 		private void GDIP_DrawColumnText(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
+			Pen pFore = new Pen(_foreColor);
+			Pen pHigh = new Pen(SystemColors.HighlightText);
+			Brush bFore = new SolidBrush(pFore.Color);
+			Brush bHigh = new SolidBrush(pHigh.Color);
 
+			if (HorizontalOrientation)
+			{
+				int start = -_vBar.Value;
+
+				foreach (var column in visibleColumns)
+				{
+					var point = new Point(CellWidthPadding, start + CellHeightPadding);
+
+					if (IsHoveringOnColumnCell && column == CurrentCell.Column)
+					{
+						e.Graphics.DrawString(column.Text, _commonFont, bHigh, (PointF)(point));
+						
+					}
+					else
+					{
+						e.Graphics.DrawString(column.Text, _commonFont, bFore, (PointF)(point));
+					}
+
+					start += CellHeight;
+				}
+			}
+			else
+			{
+				foreach (var column in visibleColumns)
+				{
+					var point = new Point(column.Left.Value + 2 * CellWidthPadding - _hBar.Value, CellHeightPadding); // TODO: fix this CellPadding issue (2 * CellPadding vs just CellPadding)
+
+					if (IsHoveringOnColumnCell && column == CurrentCell.Column)
+					{
+						e.Graphics.DrawString(column.Text, _commonFont, bHigh, (PointF)(point));
+					}
+					else
+					{
+						e.Graphics.DrawString(column.Text, _commonFont, bFore, (PointF)(point));
+					}
+				}
+			}
 		}
 
 		private void GDIP_DrawData(PaintEventArgs e, List<RollColumn> visibleColumns)
@@ -186,7 +227,7 @@ namespace BizHawk.Client.EmuHawk
 
 						if (CurrentCell.Column.Emphasis)
 						{
-							b = new SolidBrush(Color.FromArgb(GetAlpha(0x00222222), SystemColors.Highlight));
+							b = new SolidBrush(Color.FromArgb(SystemColors.Highlight.ToArgb() + 0x00222222));
 							//_gdi.SetBrush(Add(SystemColors.Highlight, 0x00222222));
 						}
 						else
@@ -216,7 +257,7 @@ namespace BizHawk.Client.EmuHawk
 
 							if (CurrentCell.Column.Emphasis)
 							{
-								b = new SolidBrush(Color.FromArgb(GetAlpha(0x00550000), SystemColors.Highlight));
+								b = new SolidBrush(Color.FromArgb(SystemColors.Highlight.ToArgb() + 0x00550000));
 								//_gdi.SetBrush(Add(SystemColors.Highlight, 0x00550000));
 							}
 							else
