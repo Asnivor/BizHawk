@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
+using BizHawk.Common;
 using BizHawk.Client.Common;
 using BizHawk.Client.EmuHawk.CustomControls;
 
@@ -15,7 +16,10 @@ namespace BizHawk.Client.EmuHawk
 	// Row width is specified for horizontal orientation
 	public partial class InputRoll : Control
 	{
-		private readonly GDI.GDIRenderer _gdi;
+		private bool IsGdiPlus => PlatformLinkedLibSingleton.RunningOnUnix;
+
+		private Font _commonFont = new Font("Arial", 8, FontStyle.Bold);
+
 		private readonly SortedSet<Cell> _selectedItems = new SortedSet<Cell>(new SortCell());
 
 		private readonly VScrollBar _vBar;
@@ -23,9 +27,7 @@ namespace BizHawk.Client.EmuHawk
 
 		private readonly Timer _hoverTimer = new Timer();
 		private readonly byte[] _lagFrames = new byte[256]; // Large enough value that it shouldn't ever need resizing. // apparently not large enough for 4K
-
-		private readonly IntPtr _rotatedFont;
-		private readonly IntPtr _normalFont;
+		
 		private readonly Color _foreColor;
 		private readonly Color _backColor;
 
@@ -58,26 +60,28 @@ namespace BizHawk.Client.EmuHawk
 			CellHeightPadding = 0;
 			CurrentCell = null;
 			ScrollMethod = "near";
-
-			var commonFont = new Font("Arial", 8, FontStyle.Bold);
-			_normalFont = Win32GDIRenderer.CreateNormalHFont(commonFont, 6);
-
-			// PrepDrawString doesn't actually set the font, so this is rather useless.
-			// I'm leaving this stuff as-is so it will be a bit easier to fix up with another rendering method.
-			_rotatedFont = Win32GDIRenderer.CreateRotatedHFont(commonFont, true);
-
-			SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-			SetStyle(ControlStyles.UserPaint, true);
-			SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-			SetStyle(ControlStyles.Opaque, true);
-
-			_gdi = new Win32GDIRenderer();
-
-			using (var g = CreateGraphics())
-			using (_gdi.LockGraphics(g))
+			
+			if (!IsGdiPlus)
 			{
-				_charSize = _gdi.MeasureString("A", commonFont); // TODO make this a property so changing it updates other values.
+				_normalFont = Win32GDIRenderer.CreateNormalHFont(_commonFont, 6);
+
+				// PrepDrawString doesn't actually set the font, so this is rather useless.
+				// I'm leaving this stuff as-is so it will be a bit easier to fix up with another rendering method.
+				_rotatedFont = Win32GDIRenderer.CreateRotatedHFont(_commonFont, true);
+
+				SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+				SetStyle(ControlStyles.UserPaint, true);
+				SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+				SetStyle(ControlStyles.Opaque, true);
+
+				_gdi = new Win32GDIRenderer();
+
+				GDIConstruction();
 			}
+			else
+			{
+				GDIPConstruction();
+			}	
 
 			UpdateCellSize();
 			ColumnWidth = CellWidth;
@@ -126,10 +130,14 @@ namespace BizHawk.Client.EmuHawk
 
 		protected override void Dispose(bool disposing)
 		{
-			_gdi.Dispose();
+			if (!IsGdiPlus)
+			{
+				GDIDispose();
+			}
+			else
+			{
 
-			Win32GDIRenderer.DestroyHFont(_normalFont);
-			Win32GDIRenderer.DestroyHFont(_rotatedFont);
+			}			
 
 			base.Dispose(disposing);
 		}
