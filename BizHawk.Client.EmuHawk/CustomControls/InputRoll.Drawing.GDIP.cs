@@ -275,7 +275,57 @@ namespace BizHawk.Client.EmuHawk
 
 		private void GDIP_DrawBg(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
+			if (UseCustomBackground && QueryItemBkColor != null)
+			{
+				DoBackGroundCallback(e, visibleColumns);
+			}
 
+			if (GridLines)
+			{
+				Pen p = new Pen(SystemColors.ControlLight);
+				if (HorizontalOrientation)
+				{
+					// Columns
+					for (int i = 1; i < VisibleRows + 1; i++)
+					{
+						int x = RowsToPixels(i);
+						e.Graphics.DrawLine(p, x, 1, x, DrawHeight);
+					}
+
+					// Rows
+					for (int i = 0; i < visibleColumns.Count + 1; i++)
+					{
+						e.Graphics.DrawLine(p, RowsToPixels(0) + 1, i * CellHeight - _vBar.Value, DrawWidth, i * CellHeight - _vBar.Value);
+					}
+				}
+				else
+				{
+					// Columns
+					int y = ColumnHeight + 1;
+					int? totalColWidth = TotalColWidth;
+					foreach (var column in visibleColumns)
+					{
+						int x = column.Left.Value - _hBar.Value;
+						e.Graphics.DrawLine(p, x, y, x, Height - 1);
+					}
+
+					if (visibleColumns.Any())
+					{
+						e.Graphics.DrawLine(p, totalColWidth.Value - _hBar.Value, y, totalColWidth.Value - _hBar.Value, Height - 1);
+					}
+
+					// Rows
+					for (int i = 1; i < VisibleRows + 1; i++)
+					{
+						e.Graphics.DrawLine(p, 0, RowsToPixels(i), Width + 1, RowsToPixels(i));
+					}
+				}
+			}
+
+			if (_selectedItems.Any())
+			{
+				DoSelectionBG(e, visibleColumns);
+			}
 		}
 
 		private void GDIP_DrawCellBG(Color color, Cell cell, List<RollColumn> visibleColumns)
