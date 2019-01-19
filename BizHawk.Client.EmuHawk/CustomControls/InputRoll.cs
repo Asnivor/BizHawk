@@ -16,7 +16,7 @@ namespace BizHawk.Client.EmuHawk
 	// Row width is specified for horizontal orientation
 	public partial class InputRoll : Control
 	{
-		private bool IsGdiPlus => true;// PlatformLinkedLibSingleton.RunningOnUnix;
+		private bool IsGdiPlus => true; // PlatformLinkedLibSingleton.RunningOnUnix;
 
 		private Font _commonFont = new Font("Arial", 8, FontStyle.Bold);
 

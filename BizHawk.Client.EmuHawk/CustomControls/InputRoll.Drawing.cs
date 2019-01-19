@@ -76,12 +76,12 @@ namespace BizHawk.Client.EmuHawk
 		/// <summary>
 		/// Given a cell with rowindex inbetween 0 and VisibleRows, it draws the background color specified. Do not call with absolute rowindices.
 		/// </summary>
-		private void DrawCellBG(Color color, Cell cell, List<RollColumn> visibleColumns)
+		private void DrawCellBG(PaintEventArgs e, Color color, Cell cell, List<RollColumn> visibleColumns)
 		{
 			if (IsGdiPlus)
-				GDIP_DrawCellBG(color, cell, visibleColumns);
+				GDIP_DrawCellBG(e, color, cell, visibleColumns);
 			else
-				GDI_DrawCellBG(color, cell, visibleColumns);
+				GDI_DrawCellBG(e, color, cell, visibleColumns);
 		}
 
 		#endregion
@@ -136,7 +136,7 @@ namespace BizHawk.Client.EmuHawk
 				cellColor = Color.FromArgb(cellColor.R - (int)((cellColor.R - SystemColors.Highlight.R) * alpha),
 					cellColor.G - (int)((cellColor.G - SystemColors.Highlight.G) * alpha),
 					cellColor.B - (int)((cellColor.B - SystemColors.Highlight.B) * alpha));
-				DrawCellBG(cellColor, relativeCell, visibleColumns);
+				DrawCellBG(e, cellColor, relativeCell, visibleColumns);
 			}
 		}
 
@@ -187,7 +187,7 @@ namespace BizHawk.Client.EmuHawk
 								Column = visibleColumns[j],
 								RowIndex = i
 							};
-							DrawCellBG(itemColor, cell, visibleColumns);
+							DrawCellBG(e, itemColor, cell, visibleColumns);
 						}
 					}
 				}
@@ -224,7 +224,7 @@ namespace BizHawk.Client.EmuHawk
 								Column = visibleColumns[j],
 								RowIndex = i
 							};
-							DrawCellBG(itemColor, cell, visibleColumns);
+							DrawCellBG(e, itemColor, cell, visibleColumns);
 						}
 					}
 				}

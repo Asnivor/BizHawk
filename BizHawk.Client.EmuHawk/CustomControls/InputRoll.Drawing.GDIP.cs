@@ -31,6 +31,7 @@ namespace BizHawk.Client.EmuHawk
 			SetStyle(ControlStyles.UserPaint, true);
 			SetStyle(ControlStyles.SupportsTransparentBackColor, true);
 			SetStyle(ControlStyles.Opaque, true);
+			SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
 			using (var g = CreateGraphics())
 			{
@@ -42,16 +43,6 @@ namespace BizHawk.Client.EmuHawk
 		private void GDIPDispose()
 		{
 
-		}
-
-		#endregion
-
-		#region Helper Functions
-
-		private int GetAlpha(int val)
-		{
-			var w = (val & 0xFF0000);
-			return w;
 		}
 
 		#endregion
@@ -93,12 +84,39 @@ namespace BizHawk.Client.EmuHawk
 
 		private void GDIP_DrawColumnDrag(PaintEventArgs e)
 		{
+			if (_columnDown != null && _columnDownMoved && _currentX.HasValue && _currentY.HasValue && IsHoveringOnColumnCell)
+			{
+				int x1 = _currentX.Value - (_columnDown.Width.Value / 2);
+				int y1 = _currentY.Value - (CellHeight / 2);
+				int x2 = x1 + _columnDown.Width.Value;
+				int y2 = y1 + CellHeight;
 
+				Pen p = new Pen(_backColor);
+				e.Graphics.DrawRectangle(p, x1, y1, x2, y2);
+				e.Graphics.DrawString(_columnDown.Text, _commonFont, new SolidBrush(_foreColor), (PointF)(new Point(x1 + CellWidthPadding, y1 + CellHeightPadding)));
+			}
 		}
 
 		private void GDIP_DrawCellDrag(PaintEventArgs e)
 		{
+			if (_draggingCell != null)
+			{
+				var text = "";
+				int offsetX = 0;
+				int offsetY = 0;
+				QueryItemText?.Invoke(_draggingCell.RowIndex.Value, _draggingCell.Column, out text, ref offsetX, ref offsetY);
 
+				Color bgColor = _backColor;
+				QueryItemBkColor?.Invoke(_draggingCell.RowIndex.Value, _draggingCell.Column, ref bgColor);
+
+				int x1 = _currentX.Value - (_draggingCell.Column.Width.Value / 2);
+				int y1 = _currentY.Value - (CellHeight / 2);
+				int x2 = x1 + _draggingCell.Column.Width.Value;
+				int y2 = y1 + CellHeight;
+
+				e.Graphics.FillRectangle(new SolidBrush(bgColor), x1, y1, x2 - x1, y2 - y1);
+				e.Graphics.DrawString(text, _commonFont, new SolidBrush(bgColor), (PointF)(new Point(x1 + CellWidthPadding + offsetX, y1 + CellHeightPadding + offsetY)));
+			}
 		}
 
 		private void GDIP_DrawColumnText(PaintEventArgs e, List<RollColumn> visibleColumns)
@@ -149,7 +167,177 @@ namespace BizHawk.Client.EmuHawk
 
 		private void GDIP_DrawData(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
+			// Prevent exceptions with small TAStudio windows
+			if (visibleColumns.Count == 0)
+			{
+				return;
+			}
 
+			bool isRotated = false;
+			bool isHIghlighted = false;
+
+			Brush bFore = new SolidBrush(_foreColor);
+			Brush bHigh = new SolidBrush(SystemColors.HighlightText);
+
+			if (QueryItemText != null)
+			{
+				if (HorizontalOrientation)
+				{
+					int startRow = FirstVisibleRow;
+					int range = Math.Min(LastVisibleRow, RowCount - 1) - startRow + 1;
+
+					//_gdi.PrepDrawString(_normalFont, _foreColor);
+					for (int i = 0, f = 0; f < range; i++, f++)
+					{
+						f += _lagFrames[i];
+						int LastVisible = LastVisibleColumnIndex;
+						for (int j = FirstVisibleColumn; j <= LastVisible; j++)
+						{
+							Bitmap image = null;
+							int x = 0;
+							int y = 0;
+							int bitmapOffsetX = 0;
+							int bitmapOffsetY = 0;
+
+							QueryItemIcon?.Invoke(f + startRow, visibleColumns[j], ref image, ref bitmapOffsetX, ref bitmapOffsetY);
+
+							if (image != null)
+							{
+								x = RowsToPixels(i) + CellWidthPadding + bitmapOffsetX;
+								y = (j * CellHeight) + (CellHeightPadding * 2) + bitmapOffsetY;
+								e.Graphics.DrawImage(image, new Point(x, y));
+							}
+
+							string text;
+							int strOffsetX = 0;
+							int strOffsetY = 0;
+							QueryItemText(f + startRow, visibleColumns[j], out text, ref strOffsetX, ref strOffsetY);
+
+							// Center Text
+							x = RowsToPixels(i) + ((CellWidth - (text.Length * _charSize.Width)) / 2);
+							y = (j * CellHeight) + CellHeightPadding - _vBar.Value;
+							var point = new Point(x + strOffsetX, y + strOffsetY);
+
+							var rePrep = false;
+							if (j == 1)
+								if (_selectedItems.Contains(new Cell { Column = visibleColumns[j], RowIndex = i + startRow }))
+								{
+									isRotated = true;
+									isHIghlighted = true;
+									rePrep = true;
+								}
+								else if (j == 1)
+								{
+									// 1. not sure about this; 2. repreps may be excess, but if we render one column at a time, we do need to change back after rendering the header
+									rePrep = true;
+									isRotated = true;
+									isHIghlighted = false;
+								}
+
+							if (!string.IsNullOrWhiteSpace(text))
+							{
+								//_gdi.DrawString(text, point);
+								if (!isRotated)
+								{
+									if (!isHIghlighted)
+										e.Graphics.DrawString(text, _commonFont, bFore, (PointF)point);
+									else
+										e.Graphics.DrawString(text, _commonFont, bHigh, (PointF)point);
+								}
+								else
+								{
+									SizeF sz = e.Graphics.VisibleClipBounds.Size;
+									e.Graphics.TranslateTransform(sz.Width / 2, sz.Height / 2);
+									e.Graphics.RotateTransform(90);
+									sz = e.Graphics.MeasureString(text, _commonFont);
+									if (!isHIghlighted)
+										e.Graphics.DrawString(text, _commonFont, bFore, -(sz.Width / 2), -(sz.Height / 2));
+									else
+										e.Graphics.DrawString(text, _commonFont, bHigh, -(sz.Width / 2), -(sz.Height / 2));
+									e.Graphics.ResetTransform();
+								}
+							}
+
+							if (rePrep)
+							{
+								isRotated = false;
+								isHIghlighted = false;
+							}
+						}
+					}
+				}
+				else
+				{
+					int startRow = FirstVisibleRow;
+					int range = Math.Min(LastVisibleRow, RowCount - 1) - startRow + 1;
+
+					int xPadding = CellWidthPadding + 1 - _hBar.Value;
+					for (int i = 0, f = 0; f < range; i++, f++) // Vertical
+					{
+						f += _lagFrames[i];
+						int LastVisible = LastVisibleColumnIndex;
+						for (int j = FirstVisibleColumn; j <= LastVisible; j++) // Horizontal
+						{
+							RollColumn col = visibleColumns[j];
+
+							string text;
+							int strOffsetX = 0;
+							int strOffsetY = 0;
+							Point point = new Point(col.Left.Value + xPadding, RowsToPixels(i) + CellHeightPadding);
+
+							Bitmap image = null;
+							int bitmapOffsetX = 0;
+							int bitmapOffsetY = 0;
+
+							QueryItemIcon?.Invoke(f + startRow, visibleColumns[j], ref image, ref bitmapOffsetX, ref bitmapOffsetY);
+
+							if (image != null)
+							{
+								e.Graphics.DrawImage(image, new Point(point.X + bitmapOffsetX, point.Y + bitmapOffsetY + CellHeightPadding));
+							}
+
+							QueryItemText(f + startRow, visibleColumns[j], out text, ref strOffsetX, ref strOffsetY);
+
+							bool rePrep = false;
+							if (_selectedItems.Contains(new Cell { Column = visibleColumns[j], RowIndex = f + startRow }))
+							{
+								isHIghlighted = true;
+								isRotated = false;
+								rePrep = true;
+							}
+
+							if (!string.IsNullOrWhiteSpace(text))
+							{
+								if (!isRotated)
+								{
+									if (!isHIghlighted)
+										e.Graphics.DrawString(text, _commonFont, bFore, (PointF)(new Point(point.X + strOffsetX, point.Y + strOffsetY)));
+									else
+										e.Graphics.DrawString(text, _commonFont, bHigh, (PointF)(new Point(point.X + strOffsetX, point.Y + strOffsetY)));
+								}
+								else
+								{
+									SizeF sz = e.Graphics.VisibleClipBounds.Size;
+									e.Graphics.TranslateTransform(sz.Width / 2, sz.Height / 2);
+									e.Graphics.RotateTransform(90);
+									sz = e.Graphics.MeasureString(text, _commonFont);
+									if (!isHIghlighted)
+										e.Graphics.DrawString(text, _commonFont, bFore, -(sz.Width / 2), -(sz.Height / 2));
+									else
+										e.Graphics.DrawString(text, _commonFont, bHigh, -(sz.Width / 2), -(sz.Height / 2));
+									e.Graphics.ResetTransform();
+								}
+							}
+
+							if (rePrep)
+							{
+								isHIghlighted = false;
+								isRotated = false;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		private void GDIP_DrawColumnBg(PaintEventArgs e, List<RollColumn> visibleColumns)
@@ -228,12 +416,10 @@ namespace BizHawk.Client.EmuHawk
 						if (CurrentCell.Column.Emphasis)
 						{
 							b = new SolidBrush(Color.FromArgb(SystemColors.Highlight.ToArgb() + 0x00222222));
-							//_gdi.SetBrush(Add(SystemColors.Highlight, 0x00222222));
 						}
 						else
 						{
 							b = new SolidBrush(SystemColors.Highlight);
-							//_gdi.SetBrush(SystemColors.Highlight);
 						}
 
 						e.Graphics.FillRectangle(b, 1, i * CellHeight + 1, ColumnWidth - 1, ColumnHeight - 1);
@@ -258,12 +444,10 @@ namespace BizHawk.Client.EmuHawk
 							if (CurrentCell.Column.Emphasis)
 							{
 								b = new SolidBrush(Color.FromArgb(SystemColors.Highlight.ToArgb() + 0x00550000));
-								//_gdi.SetBrush(Add(SystemColors.Highlight, 0x00550000));
 							}
 							else
 							{
 								b = new SolidBrush(SystemColors.Highlight);
-								//_gdi.SetBrush(SystemColors.Highlight);
 							}
 
 							e.Graphics.FillRectangle(b, left + 1, 1, width - 1, ColumnHeight - 1);
@@ -328,9 +512,40 @@ namespace BizHawk.Client.EmuHawk
 			}
 		}
 
-		private void GDIP_DrawCellBG(Color color, Cell cell, List<RollColumn> visibleColumns)
+		private void GDIP_DrawCellBG(PaintEventArgs e, Color color, Cell cell, List<RollColumn> visibleColumns)
 		{
+			int x, y, w, h;
 
+			if (HorizontalOrientation)
+			{
+				x = RowsToPixels(cell.RowIndex.Value) + 1;
+				w = CellWidth - 1;
+				y = (CellHeight * visibleColumns.IndexOf(cell.Column)) + 1 - _vBar.Value; // We can't draw without row and column, so assume they exist and fail catastrophically if they don't
+				h = CellHeight - 1;
+				if (x < ColumnWidth)
+				{
+					return;
+				}
+			}
+			else
+			{
+				w = cell.Column.Width.Value - 1;
+				x = cell.Column.Left.Value - _hBar.Value + 1;
+				y = RowsToPixels(cell.RowIndex.Value) + 1; // We can't draw without row and column, so assume they exist and fail catastrophically if they don't
+				h = CellHeight - 1;
+				if (y < ColumnHeight)
+				{
+					return;
+				}
+			}
+
+			if (x > DrawWidth || y > DrawHeight)
+			{
+				//return;
+			} // Don't draw if off screen.
+
+			e.Graphics.FillRectangle(new SolidBrush(color), x, y, w, h);
+			
 		}
 
 		#endregion

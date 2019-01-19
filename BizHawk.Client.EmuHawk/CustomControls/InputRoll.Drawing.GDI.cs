@@ -469,7 +469,7 @@ namespace BizHawk.Client.EmuHawk
 			}
 		}
 
-		private void GDI_DrawCellBG(Color color, Cell cell, List<RollColumn> visibleColumns)
+		private void GDI_DrawCellBG(PaintEventArgs e, Color color, Cell cell, List<RollColumn> visibleColumns)
 		{
 			int x, y, w, h;
 
