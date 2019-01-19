@@ -541,7 +541,7 @@ namespace BizHawk.Client.EmuHawk
 
 			if (x > DrawWidth || y > DrawHeight)
 			{
-				//return;
+				return;
 			} // Don't draw if off screen.
 
 			e.Graphics.FillRectangle(new SolidBrush(color), x, y, w, h);
