@@ -201,7 +201,7 @@ namespace BizHawk.Client.EmuHawk
 				{
 					return _hBar.SmallChange / CellWidth;
 				}
-
+				if (CellHeight == 0) CellHeight++;
 				return _vBar.SmallChange / CellHeight;
 			}
 
@@ -652,7 +652,7 @@ namespace BizHawk.Client.EmuHawk
 				{
 					return _hBar.Value / CellWidth;
 				}
-
+				if (CellHeight == 0) CellHeight++;
 				return _vBar.Value / CellHeight;
 			}
 
@@ -780,6 +780,7 @@ namespace BizHawk.Client.EmuHawk
 		{
 			get
 			{
+				if (CellHeight == 0) CellHeight++;
 				if (HorizontalOrientation)
 				{
 					return (DrawWidth - ColumnWidth) / CellWidth;
@@ -798,6 +799,7 @@ namespace BizHawk.Client.EmuHawk
 		{
 			get
 			{
+				if (CellHeight == 0) CellHeight++;
 				if (HorizontalOrientation)
 				{
 					return _vBar.Value / CellHeight;
@@ -814,6 +816,7 @@ namespace BizHawk.Client.EmuHawk
 		{
 			get
 			{
+				if (CellHeight == 0) CellHeight++;
 				List<RollColumn> columnList = VisibleColumns.ToList();
 				int ret;
 				if (HorizontalOrientation)
@@ -1588,10 +1591,14 @@ namespace BizHawk.Client.EmuHawk
 		// See MSDN Page for more information on the dumb ScrollBar.Maximum Property
 		private void RecalculateScrollBars()
 		{
+			if (_vBar == null || _hBar == null)
+				return;
+
 			UpdateDrawSize();
 
 			var columns = _columns.VisibleColumns.ToList();
 
+			if (CellHeight == 0) CellHeight++;
 			if (HorizontalOrientation)
 			{
 				NeedsVScrollbar = columns.Count > DrawHeight / CellHeight;
@@ -1772,6 +1779,8 @@ namespace BizHawk.Client.EmuHawk
 				{
 					newCell.RowIndex = PixelsToRows(x);
 
+					if (CellHeight == 0) CellHeight++;
+
 					int colIndex = (y + _vBar.Value) / CellHeight;
 					if (colIndex >= 0 && colIndex < columns.Count)
 					{
@@ -1872,6 +1881,7 @@ namespace BizHawk.Client.EmuHawk
 			{
 				return (int)Math.Floor((float)(pixels - ColumnWidth) / CellWidth);
 			}
+			if (CellHeight == 0) CellHeight++;
 			return (int)Math.Floor((float)(pixels - ColumnHeight) / CellHeight);
 		}
 
