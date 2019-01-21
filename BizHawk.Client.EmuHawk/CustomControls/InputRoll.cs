@@ -16,7 +16,7 @@ namespace BizHawk.Client.EmuHawk
 	// Row width is specified for horizontal orientation
 	public partial class InputRoll : Control
 	{
-		private bool IsGdiPlus => true; // PlatformLinkedLibSingleton.RunningOnUnix;
+		private RollRenderer Renderer = RollRenderer.GDIPlus;
 
 		private Font _commonFont = new Font("Arial", 8, FontStyle.Bold);
 
@@ -54,6 +54,9 @@ namespace BizHawk.Client.EmuHawk
 
 		public InputRoll()
 		{
+			// set renderer once at InputRoll instantiation
+			Renderer = (RollRenderer)TAStudio.InputRollRenderer;
+
 			UseCustomBackground = true;
 			GridLines = true;
 			CellWidthPadding = 3;
@@ -61,26 +64,27 @@ namespace BizHawk.Client.EmuHawk
 			CurrentCell = null;
 			ScrollMethod = "near";
 			
-			if (!IsGdiPlus)
+			switch (Renderer)
 			{
-				_normalFont = Win32GDIRenderer.CreateNormalHFont(_commonFont, 6);
+				case RollRenderer.GDI:
+					_normalFont = Win32GDIRenderer.CreateNormalHFont(_commonFont, 6);
 
-				// PrepDrawString doesn't actually set the font, so this is rather useless.
-				// I'm leaving this stuff as-is so it will be a bit easier to fix up with another rendering method.
-				_rotatedFont = Win32GDIRenderer.CreateRotatedHFont(_commonFont, true);
+					// PrepDrawString doesn't actually set the font, so this is rather useless.
+					// I'm leaving this stuff as-is so it will be a bit easier to fix up with another rendering method.
+					_rotatedFont = Win32GDIRenderer.CreateRotatedHFont(_commonFont, true);
 
-				SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-				SetStyle(ControlStyles.UserPaint, true);
-				SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-				SetStyle(ControlStyles.Opaque, true);
+					SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+					SetStyle(ControlStyles.UserPaint, true);
+					SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+					SetStyle(ControlStyles.Opaque, true);
 
-				_gdi = new Win32GDIRenderer();
+					_gdi = new Win32GDIRenderer();
 
-				GDIConstruction();
-			}
-			else
-			{
-				GDIPConstruction();
+					GDIConstruction();
+					break;
+				case RollRenderer.GDIPlus:
+					GDIPConstruction();
+					break;
 			}	
 
 			UpdateCellSize();
@@ -130,14 +134,10 @@ namespace BizHawk.Client.EmuHawk
 
 		protected override void Dispose(bool disposing)
 		{
-			if (!IsGdiPlus)
+			if (Renderer == RollRenderer.GDI)
 			{
 				GDIDispose();
-			}
-			else
-			{
-
-			}			
+			}				
 
 			base.Dispose(disposing);
 		}
@@ -2277,6 +2277,12 @@ namespace BizHawk.Client.EmuHawk
 
 				return c1.Column.Name.CompareTo(c2.Column.Name);
 			}
+		}
+
+		public enum RollRenderer
+		{
+			GDI = 0,
+			GDIPlus = 1
 		}
 
 		#endregion

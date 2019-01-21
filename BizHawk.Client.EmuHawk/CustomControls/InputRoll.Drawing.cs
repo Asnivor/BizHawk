@@ -14,50 +14,50 @@ namespace BizHawk.Client.EmuHawk
 		#region Renderer-Based Logic Methods
 
 		protected override void OnPaint(PaintEventArgs e)
-		{
-			if (IsGdiPlus)
+		{			
+			if (Renderer == RollRenderer.GDIPlus)
 				GDIP_OnPaint(e);
-			else
+			else if (Renderer == RollRenderer.GDI)
 				GDI_OnPaint(e);
 		}
 
 		private void DrawColumnDrag(PaintEventArgs e)
 		{
-			if (IsGdiPlus)
+			if (Renderer == RollRenderer.GDIPlus)
 				GDIP_DrawColumnDrag(e);
-			else
+			else if (Renderer == RollRenderer.GDI)
 				GDI_DrawColumnDrag(e);
 		}
 
 		private void DrawCellDrag(PaintEventArgs e)
 		{
-			if (IsGdiPlus)
+			if (Renderer == RollRenderer.GDIPlus)
 				GDIP_DrawCellDrag(e);
-			else
+			else if (Renderer == RollRenderer.GDI)
 				GDIP_DrawCellDrag(e);
 		}
 
 		private void DrawColumnText(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
-			if (IsGdiPlus)
+			if (Renderer == RollRenderer.GDIPlus)
 				GDIP_DrawColumnText(e, visibleColumns);
-			else
+			else if (Renderer == RollRenderer.GDI)
 				GDI_DrawColumnText(e, visibleColumns);
 		}
 
 		private void DrawData(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
-			if (IsGdiPlus)
+			if (Renderer == RollRenderer.GDIPlus)
 				GDIP_DrawData(e, visibleColumns);
-			else
+			else if (Renderer == RollRenderer.GDI)
 				GDI_DrawData(e, visibleColumns);
 		}
 
 		private void DrawColumnBg(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
-			if (IsGdiPlus)
+			if (Renderer == RollRenderer.GDIPlus)
 				GDIP_DrawColumnBg(e, visibleColumns);
-			else
+			else if (Renderer == RollRenderer.GDI)
 				GDI_DrawColumnBg(e, visibleColumns);
 		}
 
@@ -67,9 +67,9 @@ namespace BizHawk.Client.EmuHawk
 		/// </summary>
 		private void DrawBg(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
-			if (IsGdiPlus)
+			if (Renderer == RollRenderer.GDIPlus)
 				GDIP_DrawBg(e, visibleColumns);
-			else
+			else if (Renderer == RollRenderer.GDI)
 				GDI_DrawBg(e, visibleColumns);
 		}
 
@@ -78,9 +78,9 @@ namespace BizHawk.Client.EmuHawk
 		/// </summary>
 		private void DrawCellBG(PaintEventArgs e, Color color, Cell cell, List<RollColumn> visibleColumns)
 		{
-			if (IsGdiPlus)
+			if (Renderer == RollRenderer.GDIPlus)
 				GDIP_DrawCellBG(e, color, cell, visibleColumns);
-			else
+			else if (Renderer == RollRenderer.GDI)
 				GDI_DrawCellBG(e, color, cell, visibleColumns);
 		}
 
