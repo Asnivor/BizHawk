@@ -1088,9 +1088,10 @@ namespace BizHawk.Client.EmuHawk
 			{
 				SetRenderer0.Checked = false;
 				SetRenderer0.Enabled = false;
+				SetRenderer0.Visible = false;
 				SetRenderer1.Checked = true;
 				SetRenderer1.Enabled = false;
-				SetRenderer1.Visible = false;
+				SetRenderer1.Visible = true;
 			}
 			else
 			{
