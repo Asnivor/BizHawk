@@ -14,7 +14,10 @@ namespace BizHawk.Client.EmuHawk
 	/// </summary>
 	public partial class InputRoll
 	{
-		private Brush baseBackground = null;
+		// single instance to mirror GDI implementation
+		private Pen sPen = null;
+		// single instance to mirror GDI implementation
+		private Brush sBrush = null;
 
 		#region Initialization and Destruction
 
@@ -52,13 +55,11 @@ namespace BizHawk.Client.EmuHawk
 		private void GDIP_OnPaint(PaintEventArgs e)
 		{
 			// white background
-			if (baseBackground == null)
-			{
-				baseBackground = new SolidBrush(Color.White);
-			}
+			sBrush = new SolidBrush(Color.White);
+			sPen = new Pen(Color.White);
 
 			Rectangle rect = e.ClipRectangle;
-			e.Graphics.FillRectangle(baseBackground, rect);
+			e.Graphics.FillRectangle(sBrush, rect);
 			e.Graphics.Flush();
 
 			// Lag frame calculations
@@ -91,9 +92,10 @@ namespace BizHawk.Client.EmuHawk
 				int x2 = x1 + _columnDown.Width.Value;
 				int y2 = y1 + CellHeight;
 
-				Pen p = new Pen(_backColor);
-				e.Graphics.DrawRectangle(p, x1, y1, x2, y2);
-				e.Graphics.DrawString(_columnDown.Text, _commonFont, new SolidBrush(_foreColor), (PointF)(new Point(x1 + CellWidthPadding, y1 + CellHeightPadding)));
+				sPen =  new Pen(_backColor);
+				e.Graphics.DrawRectangle(sPen, x1, y1, x2, y2);
+				sBrush = new SolidBrush(_foreColor);
+				e.Graphics.DrawString(_columnDown.Text, _commonFont, sBrush, (PointF)(new Point(x1 + CellWidthPadding, y1 + CellHeightPadding)));
 			}
 		}
 
@@ -114,21 +116,20 @@ namespace BizHawk.Client.EmuHawk
 				int x2 = x1 + _draggingCell.Column.Width.Value;
 				int y2 = y1 + CellHeight;
 
-				e.Graphics.FillRectangle(new SolidBrush(bgColor), x1, y1, x2 - x1, y2 - y1);
-				e.Graphics.DrawString(text, _commonFont, new SolidBrush(bgColor), (PointF)(new Point(x1 + CellWidthPadding + offsetX, y1 + CellHeightPadding + offsetY)));
+				sBrush = new SolidBrush(bgColor);
+				e.Graphics.FillRectangle(sBrush, x1, y1, x2 - x1, y2 - y1);
+				sBrush = new SolidBrush(_foreColor);
+				e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)(new Point(x1 + CellWidthPadding + offsetX, y1 + CellHeightPadding + offsetY)));
 			}
 		}
 
 		private void GDIP_DrawColumnText(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
-			Pen pFore = new Pen(_foreColor);
-			Pen pHigh = new Pen(SystemColors.HighlightText);
-			Brush bFore = new SolidBrush(pFore.Color);
-			Brush bHigh = new SolidBrush(pHigh.Color);
-
 			if (HorizontalOrientation)
 			{
 				int start = -_vBar.Value;
+
+				sBrush = new SolidBrush(_foreColor);
 
 				foreach (var column in visibleColumns)
 				{
@@ -136,12 +137,13 @@ namespace BizHawk.Client.EmuHawk
 
 					if (IsHoveringOnColumnCell && column == CurrentCell.Column)
 					{
-						e.Graphics.DrawString(column.Text, _commonFont, bHigh, (PointF)(point));
-						
+						sBrush = new SolidBrush(SystemColors.HighlightText);
+						e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						sBrush = new SolidBrush(_foreColor);
 					}
 					else
 					{
-						e.Graphics.DrawString(column.Text, _commonFont, bFore, (PointF)(point));
+						e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
 					}
 
 					start += CellHeight;
@@ -149,17 +151,21 @@ namespace BizHawk.Client.EmuHawk
 			}
 			else
 			{
+				sBrush = new SolidBrush(_foreColor);
+
 				foreach (var column in visibleColumns)
 				{
 					var point = new Point(column.Left.Value + 2 * CellWidthPadding - _hBar.Value, CellHeightPadding); // TODO: fix this CellPadding issue (2 * CellPadding vs just CellPadding)
 
 					if (IsHoveringOnColumnCell && column == CurrentCell.Column)
 					{
-						e.Graphics.DrawString(column.Text, _commonFont, bHigh, (PointF)(point));
+						sBrush = new SolidBrush(SystemColors.HighlightText);
+						e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						sBrush = new SolidBrush(_foreColor);
 					}
 					else
 					{
-						e.Graphics.DrawString(column.Text, _commonFont, bFore, (PointF)(point));
+						e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
 					}
 				}
 			}
@@ -174,10 +180,6 @@ namespace BizHawk.Client.EmuHawk
 			}
 
 			bool isRotated = false;
-			bool isHIghlighted = false;
-
-			Brush bFore = new SolidBrush(_foreColor);
-			Brush bHigh = new SolidBrush(SystemColors.HighlightText);
 
 			if (QueryItemText != null)
 			{
@@ -186,7 +188,7 @@ namespace BizHawk.Client.EmuHawk
 					int startRow = FirstVisibleRow;
 					int range = Math.Min(LastVisibleRow, RowCount - 1) - startRow + 1;
 
-					//_gdi.PrepDrawString(_normalFont, _foreColor);
+					sBrush = new SolidBrush(_foreColor);
 					for (int i = 0, f = 0; f < range; i++, f++)
 					{
 						f += _lagFrames[i];
@@ -223,7 +225,7 @@ namespace BizHawk.Client.EmuHawk
 								if (_selectedItems.Contains(new Cell { Column = visibleColumns[j], RowIndex = i + startRow }))
 								{
 									isRotated = true;
-									isHIghlighted = true;
+									sBrush = new SolidBrush(SystemColors.HighlightText);
 									rePrep = true;
 								}
 								else if (j == 1)
@@ -231,37 +233,30 @@ namespace BizHawk.Client.EmuHawk
 									// 1. not sure about this; 2. repreps may be excess, but if we render one column at a time, we do need to change back after rendering the header
 									rePrep = true;
 									isRotated = true;
-									isHIghlighted = false;
+									sBrush = new SolidBrush(SystemColors.HighlightText);
 								}
 
 							if (!string.IsNullOrWhiteSpace(text))
 							{
 								//_gdi.DrawString(text, point);
-								if (!isRotated)
-								{
-									if (!isHIghlighted)
-										e.Graphics.DrawString(text, _commonFont, bFore, (PointF)point);
-									else
-										e.Graphics.DrawString(text, _commonFont, bHigh, (PointF)point);
-								}
-								else
+								if (isRotated)
 								{
 									SizeF sz = e.Graphics.VisibleClipBounds.Size;
 									e.Graphics.TranslateTransform(sz.Width / 2, sz.Height / 2);
 									e.Graphics.RotateTransform(90);
 									sz = e.Graphics.MeasureString(text, _commonFont);
-									if (!isHIghlighted)
-										e.Graphics.DrawString(text, _commonFont, bFore, -(sz.Width / 2), -(sz.Height / 2));
-									else
-										e.Graphics.DrawString(text, _commonFont, bHigh, -(sz.Width / 2), -(sz.Height / 2));
-									e.Graphics.ResetTransform();
+									e.Graphics.DrawString(text, _commonFont, sBrush, -(sz.Width / 2), -(sz.Height / 2));
+								}
+								else
+								{
+									e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)point);
 								}
 							}
 
 							if (rePrep)
 							{
 								isRotated = false;
-								isHIghlighted = false;
+								sBrush = new SolidBrush(_foreColor);
 							}
 						}
 					}
@@ -270,6 +265,8 @@ namespace BizHawk.Client.EmuHawk
 				{
 					int startRow = FirstVisibleRow;
 					int range = Math.Min(LastVisibleRow, RowCount - 1) - startRow + 1;
+
+					sBrush = new SolidBrush(_foreColor);
 
 					int xPadding = CellWidthPadding + 1 - _hBar.Value;
 					for (int i = 0, f = 0; f < range; i++, f++) // Vertical
@@ -301,38 +298,20 @@ namespace BizHawk.Client.EmuHawk
 							bool rePrep = false;
 							if (_selectedItems.Contains(new Cell { Column = visibleColumns[j], RowIndex = f + startRow }))
 							{
-								isHIghlighted = true;
+								sBrush = new SolidBrush(SystemColors.HighlightText);
 								isRotated = false;
 								rePrep = true;
 							}
 
 							if (!string.IsNullOrWhiteSpace(text))
 							{
-								if (!isRotated)
-								{
-									if (!isHIghlighted)
-										e.Graphics.DrawString(text, _commonFont, bFore, (PointF)(new Point(point.X + strOffsetX, point.Y + strOffsetY)));
-									else
-										e.Graphics.DrawString(text, _commonFont, bHigh, (PointF)(new Point(point.X + strOffsetX, point.Y + strOffsetY)));
-								}
-								else
-								{
-									SizeF sz = e.Graphics.VisibleClipBounds.Size;
-									e.Graphics.TranslateTransform(sz.Width / 2, sz.Height / 2);
-									e.Graphics.RotateTransform(90);
-									sz = e.Graphics.MeasureString(text, _commonFont);
-									if (!isHIghlighted)
-										e.Graphics.DrawString(text, _commonFont, bFore, -(sz.Width / 2), -(sz.Height / 2));
-									else
-										e.Graphics.DrawString(text, _commonFont, bHigh, -(sz.Width / 2), -(sz.Height / 2));
-									e.Graphics.ResetTransform();
-								}
+								e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)(new Point(point.X + strOffsetX, point.Y + strOffsetY)));
 							}
 
 							if (rePrep)
 							{
-								isHIghlighted = false;
 								isRotated = false;
+								sBrush = new SolidBrush(_foreColor);
 							}
 						}
 					}
@@ -342,25 +321,25 @@ namespace BizHawk.Client.EmuHawk
 
 		private void GDIP_DrawColumnBg(PaintEventArgs e, List<RollColumn> visibleColumns)
 		{
-			Brush b = new SolidBrush(SystemColors.ControlLight);
-			Pen p = new Pen(Color.Black);
+			sBrush = new SolidBrush(SystemColors.ControlLight);
+			sPen = new Pen(Color.Black);
 
 			if (HorizontalOrientation)
 			{
-				e.Graphics.FillRectangle(b, 0, 0, ColumnWidth + 1, DrawHeight + 1);
-				e.Graphics.DrawLine(p, 0, 0, 0, visibleColumns.Count * CellHeight + 1);
-				e.Graphics.DrawLine(p, ColumnWidth, 0, ColumnWidth, visibleColumns.Count * CellHeight + 1);
+				e.Graphics.FillRectangle(sBrush, 0, 0, ColumnWidth + 1, DrawHeight + 1);
+				e.Graphics.DrawLine(sPen, 0, 0, 0, visibleColumns.Count * CellHeight + 1);
+				e.Graphics.DrawLine(sPen, ColumnWidth, 0, ColumnWidth, visibleColumns.Count * CellHeight + 1);
 
 				int start = -_vBar.Value;
 				foreach (var column in visibleColumns)
 				{
-					e.Graphics.DrawLine(p, 1, start, ColumnWidth, start);
+					e.Graphics.DrawLine(sPen, 1, start, ColumnWidth, start);
 					start += CellHeight;
 				}
 
 				if (visibleColumns.Any())
 				{
-					e.Graphics.DrawLine(p, 1, start, ColumnWidth, start);
+					e.Graphics.DrawLine(sPen, 1, start, ColumnWidth, start);
 				}
 			}
 			else
@@ -368,36 +347,36 @@ namespace BizHawk.Client.EmuHawk
 				int bottomEdge = RowsToPixels(0);
 
 				// Gray column box and black line underneath
-				e.Graphics.FillRectangle(b, 0, 0, Width + 1, bottomEdge + 1);
-				e.Graphics.DrawLine(p, 0, 0, TotalColWidth.Value + 1, 0);
-				e.Graphics.DrawLine(p, 0, bottomEdge, TotalColWidth.Value + 1, bottomEdge);
+				e.Graphics.FillRectangle(sBrush, 0, 0, Width + 1, bottomEdge + 1);
+				e.Graphics.DrawLine(sPen, 0, 0, TotalColWidth.Value + 1, 0);
+				e.Graphics.DrawLine(sPen, 0, bottomEdge, TotalColWidth.Value + 1, bottomEdge);
 
 				// Vertical black seperators
 				for (int i = 0; i < visibleColumns.Count; i++)
 				{
 					int pos = visibleColumns[i].Left.Value - _hBar.Value;
-					e.Graphics.DrawLine(p, pos, 0, pos, bottomEdge);
+					e.Graphics.DrawLine(sPen, pos, 0, pos, bottomEdge);
 				}
 
 				// Draw right most line
 				if (visibleColumns.Any())
 				{
 					int right = TotalColWidth.Value - _hBar.Value;
-					e.Graphics.DrawLine(p, right, 0, right, bottomEdge);
+					e.Graphics.DrawLine(sPen, right, 0, right, bottomEdge);
 				}
 			}
 
 			// Emphasis
 			foreach (var column in visibleColumns.Where(c => c.Emphasis))
 			{
-				b = new SolidBrush(SystemColors.ActiveBorder);
+				sBrush = new SolidBrush(SystemColors.ActiveBorder);
 				if (HorizontalOrientation)
 				{
-					e.Graphics.FillRectangle(b, 1, visibleColumns.IndexOf(column) * CellHeight + 1, ColumnWidth - 1, ColumnHeight - 1);
+					e.Graphics.FillRectangle(sBrush, 1, visibleColumns.IndexOf(column) * CellHeight + 1, ColumnWidth - 1, ColumnHeight - 1);
 				}
 				else
 				{
-					e.Graphics.FillRectangle(b, column.Left.Value + 1 - _hBar.Value, 1, column.Width.Value - 1, ColumnHeight - 1);
+					e.Graphics.FillRectangle(sBrush, column.Left.Value + 1 - _hBar.Value, 1, column.Width.Value - 1, ColumnHeight - 1);
 				}
 			}
 
@@ -415,14 +394,14 @@ namespace BizHawk.Client.EmuHawk
 
 						if (CurrentCell.Column.Emphasis)
 						{
-							b = new SolidBrush(Color.FromArgb(SystemColors.Highlight.ToArgb() + 0x00222222));
+							sBrush = new SolidBrush(Color.FromArgb(SystemColors.Highlight.ToArgb() + 0x00222222));
 						}
 						else
 						{
-							b = new SolidBrush(SystemColors.Highlight);
+							sBrush = new SolidBrush(SystemColors.Highlight);
 						}
 
-						e.Graphics.FillRectangle(b, 1, i * CellHeight + 1, ColumnWidth - 1, ColumnHeight - 1);
+						e.Graphics.FillRectangle(sBrush, 1, i * CellHeight + 1, ColumnWidth - 1, ColumnHeight - 1);
 					}
 				}
 				else
@@ -443,14 +422,14 @@ namespace BizHawk.Client.EmuHawk
 
 							if (CurrentCell.Column.Emphasis)
 							{
-								b = new SolidBrush(Color.FromArgb(SystemColors.Highlight.ToArgb() + 0x00550000));
+								sBrush = new SolidBrush(Color.FromArgb(SystemColors.Highlight.ToArgb() + 0x00550000));
 							}
 							else
 							{
-								b = new SolidBrush(SystemColors.Highlight);
+								sBrush = new SolidBrush(SystemColors.Highlight);
 							}
 
-							e.Graphics.FillRectangle(b, left + 1, 1, width - 1, ColumnHeight - 1);
+							e.Graphics.FillRectangle(sBrush, left + 1, 1, width - 1, ColumnHeight - 1);
 						}
 					}
 				}
@@ -466,20 +445,20 @@ namespace BizHawk.Client.EmuHawk
 
 			if (GridLines)
 			{
-				Pen p = new Pen(SystemColors.ControlLight);
+				sPen = new Pen(SystemColors.ControlLight);
 				if (HorizontalOrientation)
 				{
 					// Columns
 					for (int i = 1; i < VisibleRows + 1; i++)
 					{
 						int x = RowsToPixels(i);
-						e.Graphics.DrawLine(p, x, 1, x, DrawHeight);
+						e.Graphics.DrawLine(sPen, x, 1, x, DrawHeight);
 					}
 
 					// Rows
 					for (int i = 0; i < visibleColumns.Count + 1; i++)
 					{
-						e.Graphics.DrawLine(p, RowsToPixels(0) + 1, i * CellHeight - _vBar.Value, DrawWidth, i * CellHeight - _vBar.Value);
+						e.Graphics.DrawLine(sPen, RowsToPixels(0) + 1, i * CellHeight - _vBar.Value, DrawWidth, i * CellHeight - _vBar.Value);
 					}
 				}
 				else
@@ -490,18 +469,18 @@ namespace BizHawk.Client.EmuHawk
 					foreach (var column in visibleColumns)
 					{
 						int x = column.Left.Value - _hBar.Value;
-						e.Graphics.DrawLine(p, x, y, x, Height - 1);
+						e.Graphics.DrawLine(sPen, x, y, x, Height - 1);
 					}
 
 					if (visibleColumns.Any())
 					{
-						e.Graphics.DrawLine(p, totalColWidth.Value - _hBar.Value, y, totalColWidth.Value - _hBar.Value, Height - 1);
+						e.Graphics.DrawLine(sPen, totalColWidth.Value - _hBar.Value, y, totalColWidth.Value - _hBar.Value, Height - 1);
 					}
 
 					// Rows
 					for (int i = 1; i < VisibleRows + 1; i++)
 					{
-						e.Graphics.DrawLine(p, 0, RowsToPixels(i), Width + 1, RowsToPixels(i));
+						e.Graphics.DrawLine(sPen, 0, RowsToPixels(i), Width + 1, RowsToPixels(i));
 					}
 				}
 			}
@@ -544,8 +523,17 @@ namespace BizHawk.Client.EmuHawk
 				return;
 			} // Don't draw if off screen.
 
-			e.Graphics.FillRectangle(new SolidBrush(color), x, y, w, h);
+			var col = cell.Column.Name;
+			if (color.A == 0)
+			{
+				sBrush = new SolidBrush(Color.FromArgb(255, color));
+			}
+			else
+			{
+				sBrush = new SolidBrush(color);
+			}				
 			
+			e.Graphics.FillRectangle(sBrush, x, y, w, h);			
 		}
 
 		#endregion
