@@ -601,6 +601,9 @@
     <Compile Include="CustomControls\MsgBox.designer.cs">
       <DependentUpon>MsgBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.Drawing.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="CustomControls\PrereqsAlert.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -738,6 +741,9 @@
     </Compile>
     <Compile Include="OpenAdvancedChooser.Designer.cs">
       <DependentUpon>OpenAdvancedChooser.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="PlatformChooser.cs">
       <SubType>Form</SubType>
