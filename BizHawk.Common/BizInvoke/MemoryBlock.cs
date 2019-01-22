@@ -141,7 +141,8 @@ namespace BizHawk.Common.BizInvoke
 		public static MemoryBlock PlatformConstructor(ulong start, ulong size)
 		{
 			return PlatformLinkedLibSingleton.RunningOnUnix
-				? (MemoryBlock) new MemoryBlockUnix(start, size)
+//				? (MemoryBlock) new MemoryBlockUnix(start, size)
+				? throw new InvalidOperationException("ctor of nonfunctional MemoryBlockUnix class")
 				: (MemoryBlock) new MemoryBlockWin32(start, size);
 		}
 
