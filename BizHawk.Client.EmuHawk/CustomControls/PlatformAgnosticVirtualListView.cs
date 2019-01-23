@@ -12,7 +12,8 @@ namespace BizHawk.Client.EmuHawk
 	/// </summary>
 	public partial class PlatformAgnosticVirtualListView : Control
 	{
-		private Font _commonFont = new Font("Arial", 8, FontStyle.Bold);
+		//private Font _commonFont; // => this.Font; // new Font("Arial", 8, FontStyle.Bold);	
+		//private Font _initFont => this.Font;
 
 		private readonly SortedSet<Cell> _selectedItems = new SortedSet<Cell>(new SortCell());
 
@@ -21,29 +22,30 @@ namespace BizHawk.Client.EmuHawk
 
 		private readonly Timer _hoverTimer = new Timer();		
 
-		private readonly Color _foreColor;
-		private readonly Color _backColor;
+		//private readonly Color _foreColor;
+		//private readonly Color _backColor;
 
 		private ListColumns _columns = new ListColumns();
 		
 		private bool _programmaticallyUpdatingScrollBarValues;		
 
-		private int _rowCount;
+		private int _itemCount;
 		private Size _charSize;
 
 		private ListColumn _columnDown;
 
 		private int? _currentX;
-		private int? _currentY;		
+		private int? _currentY;
 
 		public PlatformAgnosticVirtualListView()
 		{
+			//_commonFont = _initFont;
 			UseCustomBackground = true;
 			GridLines = true;
 			CellWidthPadding = 3;
 			CellHeightPadding = 0;
 			CurrentCell = null;
-			ScrollMethod = "near";
+			ScrollMethod = "near";			
 
 			SetStyle(ControlStyles.AllPaintingInWmPaint, true);
 			SetStyle(ControlStyles.UserPaint, true);
@@ -51,11 +53,17 @@ namespace BizHawk.Client.EmuHawk
 			SetStyle(ControlStyles.Opaque, true);
 			SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
+			ControlSettings = new Settings(this);
+			ControlSettings.InitDefaults();
+
+			//SetCharSize();
+			/*
 			using (var g = CreateGraphics())
 			{
 				var sizeF = g.MeasureString("A", _commonFont);
 				_charSize = Size.Round(sizeF);
 			}
+			*/
 
 			UpdateCellSize();
 			ColumnWidth = CellWidth;
@@ -91,9 +99,9 @@ namespace BizHawk.Client.EmuHawk
 			_hoverTimer.Tick += HoverTimerEventProcessor;
 			_hoverTimer.Stop();
 
-			_foreColor = ForeColor;
-			_backColor = BackColor;
-		}
+			//_foreColor = ForeColor;
+			//_backColor = BackColor;
+		}		
 
 		private void HoverTimerEventProcessor(object sender, EventArgs e)
 		{
@@ -335,6 +343,17 @@ namespace BizHawk.Client.EmuHawk
 
 		public string RotateHotkeyStr => "Ctrl+Shift+F";
 
+		/// <summary>
+		/// Check if a given frame is a lag frame
+		/// </summary>
+		public delegate bool QueryFrameLagHandler(int index, bool hideWasLag);
+
+
+		/// <summary>
+		/// Fire the QueryFrameLag event which checks if a given frame is a lag frame
+		/// </summary>
+		[Category("Virtual")]
+		public event QueryFrameLagHandler QueryFrameLag;
 
 		*/
 

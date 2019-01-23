@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 
 namespace BizHawk.Client.EmuHawk
 {
@@ -62,6 +62,7 @@ namespace BizHawk.Client.EmuHawk
 		{
 			public enum InputType { Boolean, Float, Text, Image }
 
+			public int Index { get; set; }
 			public string Group { get; set; }
 			public int? Width { get; set; }
 			public int? Left { get; set; }
@@ -305,6 +306,109 @@ namespace BizHawk.Client.EmuHawk
 				return c1.Column.Name.CompareTo(c2.Column.Name);
 			}
 		}
+
+		#endregion
+
+		#region Settings
+
+		public Settings ControlSettings;
+
+		public class Settings
+		{
+			private PlatformAgnosticVirtualListView PALV;
+
+			public Settings(PlatformAgnosticVirtualListView control)
+			{
+				PALV = control;
+			}
+
+			public Settings()
+			{ }
+
+			/// <summary>
+			/// If set the vertical scrollbar will auto-scroll to bottom
+			/// </summary>
+			public bool? ScrollToCaret { get; set; }
+
+			/// <summary>
+			/// The font used for the column header text
+			/// </summary>
+			public Font ColumnHeaderTextFont { get; set; }
+
+			/// <summary>
+			/// The color of the column header text
+			/// </summary>
+			public Color? ColumnHeaderTextColor { get; set; }
+
+			/// <summary>
+			/// The color of the column header background
+			/// </summary>
+			public Color? ColumnHeaderBackgroundColor { get; set; }
+
+			/// <summary>
+			/// The color of the column header cell when it is highlighted
+			/// </summary>
+			public Color? ColumnHeaderHighlightColor { get; set; }
+
+			/// <summary>
+			/// The font used for the item (row) text
+			/// </summary>
+			public Font ItemTextFont { get; set; }
+
+			/// <summary>
+			/// The color of the item (row) text
+			/// </summary>
+			public Color? ItemTextColor { get; set; }
+
+			/// <summary>
+			/// The color of the item (row) background
+			/// </summary>
+			public Color? ItemBackgroundColor { get; set; }
+
+			/// <summary>
+			/// The color of the row cell when it is highlighted
+			/// </summary>
+			public Color? ItemHighlightColor { get; set; }
+
+			/// <summary>
+			/// The color used to draw the ListView gridlines
+			/// </summary>
+			public Color? GridLineColor { get; set; }
+
+			public void UpdateSettings(Settings settings)
+			{
+				if (settings.ScrollToCaret.HasValue && settings.ScrollToCaret != this.ScrollToCaret) this.ScrollToCaret = settings.ScrollToCaret;
+				if (settings.ColumnHeaderTextFont != null && settings.ColumnHeaderTextFont != this.ColumnHeaderTextFont) this.ColumnHeaderTextFont = settings.ColumnHeaderTextFont;
+				if (settings.ColumnHeaderTextColor.HasValue && settings.ColumnHeaderTextColor != this.ColumnHeaderTextColor) this.ColumnHeaderTextColor = settings.ColumnHeaderTextColor;
+				if (settings.ColumnHeaderBackgroundColor.HasValue && settings.ColumnHeaderBackgroundColor != this.ColumnHeaderBackgroundColor) this.ColumnHeaderBackgroundColor = settings.ColumnHeaderBackgroundColor;
+				if (settings.ColumnHeaderHighlightColor.HasValue && settings.ColumnHeaderHighlightColor != this.ColumnHeaderHighlightColor) this.ColumnHeaderHighlightColor = settings.ColumnHeaderHighlightColor;
+				if (settings.ItemTextFont != null && settings.ItemTextFont != this.ItemTextFont) this.ItemTextFont = settings.ItemTextFont;
+				if (settings.ItemTextColor.HasValue && settings.ItemTextColor != this.ItemTextColor) this.ItemTextColor = settings.ItemTextColor;
+				if (settings.ItemBackgroundColor.HasValue && settings.ItemBackgroundColor != this.ItemBackgroundColor) this.ItemBackgroundColor = settings.ItemBackgroundColor;
+				if (settings.ItemHighlightColor.HasValue && settings.ItemHighlightColor != this.ItemHighlightColor) this.ItemHighlightColor = settings.ItemHighlightColor;
+				if (settings.GridLineColor.HasValue && settings.GridLineColor != this.GridLineColor) this.GridLineColor = settings.GridLineColor;
+
+				PALV.SetCharSize();
+			}
+
+			public void InitDefaults()
+			{
+				UpdateSettings(new Settings
+				{
+					ScrollToCaret = false,
+					ColumnHeaderTextFont = new Font("Arial", 8, FontStyle.Bold),
+					ColumnHeaderTextColor = Color.Black,
+					ColumnHeaderBackgroundColor = Color.LightGray,
+					ColumnHeaderHighlightColor = SystemColors.HighlightText,
+					ItemTextFont = new Font("Arial", 8, FontStyle.Regular),
+					ItemTextColor = Color.Black,
+					ItemBackgroundColor = Color.White,
+					ItemHighlightColor = SystemColors.HighlightText,
+					GridLineColor = SystemColors.ControlLight,
+				});
+			}
+		}
+		
 
 		#endregion
 	}

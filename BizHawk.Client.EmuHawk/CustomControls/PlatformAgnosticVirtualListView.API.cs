@@ -19,7 +19,35 @@ namespace BizHawk.Client.EmuHawk
 
 		#region Methods
 
-		public void SelectRow(int index, bool val)
+		/// <summary>
+		/// Parent form calls this to add columns
+		/// </summary>
+		/// <param name="columnName"></param>
+		/// <param name="columnText"></param>
+		/// <param name="columnWidth"></param>
+		/// <param name="columnType"></param>
+		public void AddColumn(string columnName, string columnText, int columnWidth, ListColumn.InputType columnType = ListColumn.InputType.Boolean)
+		{
+			if (AllColumns[columnName] == null)
+			{
+				var column = new ListColumn
+				{
+					Name = columnName,
+					Text = columnText,
+					Width = columnWidth,
+					Type = columnType
+				};
+
+				AllColumns.Add(column);
+			}
+		}
+
+		/// <summary>
+		/// Sets the state of the passed row index
+		/// </summary>
+		/// <param name="index"></param>
+		/// <param name="val"></param>
+		public void SelectItem(int index, bool val)
 		{
 			if (_columns.VisibleColumns.Any())
 			{
@@ -43,9 +71,9 @@ namespace BizHawk.Client.EmuHawk
 		{
 			var oldFullRowVal = FullRowSelect;
 			FullRowSelect = true;
-			for (int i = 0; i < RowCount; i++)
+			for (int i = 0; i < ItemCount; i++)
 			{
-				SelectRow(i, true);
+				SelectItem(i, true);
 			}
 
 			FullRowSelect = oldFullRowVal;

@@ -49,7 +49,7 @@ namespace BizHawk.Client.EmuHawk
 			var columns = _columns.VisibleColumns.ToList();
 
 			if (CellHeight == 0) CellHeight++;
-			NeedsVScrollbar = RowCount > 1;
+			NeedsVScrollbar = ItemCount > 1;
 			NeedsHScrollbar = TotalColWidth.HasValue && TotalColWidth.Value - DrawWidth + 1 > 0;
 
 			UpdateDrawSize();
@@ -65,7 +65,7 @@ namespace BizHawk.Client.EmuHawk
 			// Update VBar
 			if (NeedsVScrollbar)
 			{
-				_vBar.Maximum = RowsToPixels(RowCount + 1) - (CellHeight * 3) + _vBar.LargeChange - 1;
+				_vBar.Maximum = RowsToPixels(ItemCount + 1) - (CellHeight * 3) + _vBar.LargeChange - 1;
 
 				_vBar.Location = new Point(Width - _vBar.Width, 0);
 				_vBar.Height = Height;
@@ -119,7 +119,7 @@ namespace BizHawk.Client.EmuHawk
 		/// <param name="cell">The cell to select.</param>
 		private void SelectCell(Cell cell, bool toggle = false)
 		{
-			if (cell.RowIndex.HasValue && cell.RowIndex < RowCount)
+			if (cell.RowIndex.HasValue && cell.RowIndex < ItemCount)
 			{
 				if (!MultiSelect)
 				{

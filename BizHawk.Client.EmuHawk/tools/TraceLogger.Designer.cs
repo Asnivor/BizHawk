@@ -31,7 +31,7 @@
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TraceLogger));
 			this.TracerBox = new System.Windows.Forms.GroupBox();
-			this.TraceView = new BizHawk.Client.EmuHawk.VirtualListView();
+			this.TraceView = new BizHawk.Client.EmuHawk.PlatformAgnosticVirtualListView();
 			this.Disasm = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.Registers = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.TraceContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -81,10 +81,10 @@
 			this.TraceView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.TraceView.BlazingFast = false;
+			this.TraceView.BlazingFast = false;			
 			this.TraceView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.Disasm,
-            this.Registers});
+            this.Registers});			
 			this.TraceView.ContextMenuStrip = this.TraceContextMenu;
 			this.TraceView.Font = new System.Drawing.Font("Courier New", 8F);
 			this.TraceView.FullRowSelect = true;
@@ -371,7 +371,7 @@
 		private System.Windows.Forms.GroupBox groupBox2;
 		private System.Windows.Forms.CheckBox LoggingEnabled;
 		private System.Windows.Forms.ToolStripMenuItem OptionsSubMenu;
-		private VirtualListView TraceView;
+		private BizHawk.Client.EmuHawk.PlatformAgnosticVirtualListView TraceView;
 		public System.Windows.Forms.ColumnHeader Disasm;
 		private System.Windows.Forms.ToolStripMenuItem MaxLinesMenuItem;
 		private System.Windows.Forms.RadioButton ToFileRadio;

@@ -72,6 +72,31 @@ namespace BizHawk.Client.EmuHawk
 			MaxLines = 10000;
 			FileSizeCap = 150; // make 1 frame of tracelog for n64/psx fit in
 			_splitFile = FileSizeCap != 0;
+
+			SetupControlSettings();
+		}
+
+		private void SetupColumns()
+		{
+			TraceView.AllColumns.Clear();
+			TraceView.AddColumn("Disasm", "Disasm", 239, PlatformAgnosticVirtualListView.ListColumn.InputType.Text);
+			TraceView.AddColumn("Registers", "Registers", 357, PlatformAgnosticVirtualListView.ListColumn.InputType.Text);
+		}
+
+		private void SetupControlSettings()
+		{
+			TraceView.ControlSettings.UpdateSettings(new PlatformAgnosticVirtualListView.Settings
+			{
+				ScrollToCaret = false,
+				ColumnHeaderTextFont = new System.Drawing.Font("Courier New", 8F),
+				ColumnHeaderTextColor = System.Drawing.Color.Black,
+				ColumnHeaderBackgroundColor = System.Drawing.Color.White,
+				ItemTextFont = new System.Drawing.Font("Courier New", 8F),
+				ItemTextColor = System.Drawing.Color.Black,
+				ItemBackgroundColor = System.Drawing.Color.White
+			});
+
+			TraceView.MultiSelect = true;
 		}
 
 		public bool UpdateBefore
@@ -113,6 +138,7 @@ namespace BizHawk.Client.EmuHawk
 			LoggingEnabled.Checked = false;
 			Tracer.Sink = null;
 			SetTracerBoxTitle();
+			SetupColumns();
 		}
 
 		class CallbackSink : ITraceSink
@@ -327,7 +353,8 @@ namespace BizHawk.Client.EmuHawk
 
 		private void CopyMenuItem_Click(object sender, EventArgs e)
 		{
-			var indices = TraceView.SelectedIndices;
+			//var indices = TraceView.SelectedIndices;
+			var indices = TraceView.SelectedRows.ToList();
 
 			if (indices.Count > 0)
 			{

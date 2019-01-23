@@ -25,6 +25,12 @@ namespace BizHawk.Client.EmuHawk
 		public event QueryItemTextHandler QueryItemText;
 
 		/// <summary>
+		/// Fire the <see cref="QueryItemTextAdvanced"/> event which requests the text for the passed cell
+		/// </summary>
+		[Category("Virtual")]
+		public event QueryItemTextHandlerAdvanced QueryItemTextAdvanced;
+
+		/// <summary>
 		/// Fire the <see cref="QueryItemBkColor"/> event which requests the background color for the passed cell
 		/// </summary>
 		[Category("Virtual")]
@@ -37,13 +43,7 @@ namespace BizHawk.Client.EmuHawk
 		/// Fire the <see cref="QueryItemIconHandler"/> event which requests an icon for a given cell
 		/// </summary>
 		[Category("Virtual")]
-		public event QueryItemIconHandler QueryItemIcon;
-
-		/// <summary>
-		/// Fire the QueryFrameLag event which checks if a given frame is a lag frame
-		/// </summary>
-		[Category("Virtual")]
-		public event QueryFrameLagHandler QueryFrameLag;
+		public event QueryItemIconHandler QueryItemIcon;		
 
 		/// <summary>
 		/// Fires when the mouse moves from one cell to another (including column header cells)
@@ -104,7 +104,8 @@ namespace BizHawk.Client.EmuHawk
 		/// <summary>
 		/// Retrieve the text for a cell
 		/// </summary>
-		public delegate void QueryItemTextHandler(int index, ListColumn column, out string text, ref int offsetX, ref int offsetY);
+		public delegate void QueryItemTextHandlerAdvanced(int index, ListColumn column, out string text, ref int offsetX, ref int offsetY);
+		public delegate void QueryItemTextHandler(int index, int column, out string text);
 
 		/// <summary>
 		/// Retrieve the background color for a cell
@@ -115,12 +116,7 @@ namespace BizHawk.Client.EmuHawk
 		/// <summary>
 		/// Retrieve the image for a given cell
 		/// </summary>
-		public delegate void QueryItemIconHandler(int index, ListColumn column, ref Bitmap icon, ref int offsetX, ref int offsetY);
-
-		/// <summary>
-		/// Check if a given frame is a lag frame
-		/// </summary>
-		public delegate bool QueryFrameLagHandler(int index, bool hideWasLag);
+		public delegate void QueryItemIconHandler(int index, ListColumn column, ref Bitmap icon, ref int offsetX, ref int offsetY);		
 
 		public delegate void CellChangeEventHandler(object sender, CellEventArgs e);
 
@@ -281,7 +277,7 @@ namespace BizHawk.Client.EmuHawk
 					{
 						// do marker drag here
 					}
-					else if (ModifierKeys == Keys.Shift && (CurrentCell.Column.Name == "FrameColumn" || CurrentCell.Column.Type == ListColumn.InputType.Text))
+					else if (ModifierKeys == Keys.Shift && (CurrentCell.Column.Type == ListColumn.InputType.Text))
 					{
 						if (_selectedItems.Any())
 						{
@@ -350,7 +346,7 @@ namespace BizHawk.Client.EmuHawk
 							SelectCell(CurrentCell);
 						}
 					}
-					else if (ModifierKeys == Keys.Control && (CurrentCell.Column.Name == "FrameColumn" || CurrentCell.Column.Type == ListColumn.InputType.Text))
+					else if (ModifierKeys == Keys.Control && (CurrentCell.Column.Type == ListColumn.InputType.Text))
 					{
 						SelectCell(CurrentCell, toggle: true);
 					}
@@ -415,7 +411,7 @@ namespace BizHawk.Client.EmuHawk
 			int newVal;
 			if (increment)
 			{
-				newVal = bar.Value + bar.SmallChange;
+				newVal = bar.Value + bar.SmallChange + 10;
 				if (newVal > bar.Maximum - bar.LargeChange)
 				{
 					newVal = bar.Maximum - bar.LargeChange;
@@ -423,7 +419,7 @@ namespace BizHawk.Client.EmuHawk
 			}
 			else
 			{
-				newVal = bar.Value - bar.SmallChange;
+				newVal = bar.Value - bar.SmallChange - 10;
 				if (newVal < 0)
 				{
 					newVal = 0;
@@ -437,26 +433,13 @@ namespace BizHawk.Client.EmuHawk
 
 		protected override void OnMouseWheel(MouseEventArgs e)
 		{
-			if (RightButtonHeld)
+			IncrementScrollBar(_vBar, e.Delta < 0);
+			if (_currentX != null)
 			{
-				DoRightMouseScroll(this, e);
+				OnMouseMove(new MouseEventArgs(MouseButtons.None, 0, _currentX.Value, _currentY.Value, 0));
 			}
-			else
-			{
-				do
-				{
-					IncrementScrollBar(_vBar, e.Delta < 0);
-					//SetLagFramesFirst();
-				}
-				while (/*_lagFrames[0] != 0 &&*/ _vBar.Value != 0 && _vBar.Value != _vBar.Maximum);
 
-				if (_currentX != null)
-				{
-					OnMouseMove(new MouseEventArgs(MouseButtons.None, 0, _currentX.Value, _currentY.Value, 0));
-				}
-
-				Refresh();
-			}
+			Refresh();			
 		}
 
 		private void DoRightMouseScroll(object sender, MouseEventArgs e)
@@ -494,12 +477,12 @@ namespace BizHawk.Client.EmuHawk
 				else if (!e.Control && !e.Alt && !e.Shift && e.KeyCode == Keys.PageDown) // Page Down
 				{
 					var totalRows = LastVisibleRow - FirstVisibleRow;
-					if (totalRows <= RowCount)
+					if (totalRows <= ItemCount)
 					{
 						var final = LastVisibleRow + totalRows;
-						if (final > RowCount)
+						if (final > ItemCount)
 						{
-							final = RowCount;
+							final = ItemCount;
 						}
 
 						LastVisibleRow = final;
@@ -513,7 +496,7 @@ namespace BizHawk.Client.EmuHawk
 				}
 				else if (!e.Control && !e.Alt && !e.Shift && e.KeyCode == Keys.End) // End
 				{
-					LastVisibleRow = RowCount;
+					LastVisibleRow = ItemCount;
 					Refresh();
 				}
 				else if (!e.Control && !e.Shift && !e.Alt && e.KeyCode == Keys.Up) // Up
@@ -526,7 +509,7 @@ namespace BizHawk.Client.EmuHawk
 				}
 				else if (!e.Control && !e.Shift && !e.Alt && e.KeyCode == Keys.Down) // Down
 				{
-					if (FirstVisibleRow < RowCount - 1)
+					if (FirstVisibleRow < ItemCount - 1)
 					{
 						FirstVisibleRow++;
 						Refresh();
@@ -539,8 +522,8 @@ namespace BizHawk.Client.EmuHawk
 					{
 						foreach (var row in SelectedRows.ToList())
 						{
-							SelectRow(row - 1, true);
-							SelectRow(row, false);
+							SelectItem(row - 1, true);
+							SelectItem(row, false);
 						}
 					}
 				}
@@ -550,8 +533,8 @@ namespace BizHawk.Client.EmuHawk
 					{
 						foreach (var row in SelectedRows.Reverse().ToList())
 						{
-							SelectRow(row + 1, true);
-							SelectRow(row, false);
+							SelectItem(row + 1, true);
+							SelectItem(row, false);
 						}
 					}
 				}
@@ -559,28 +542,28 @@ namespace BizHawk.Client.EmuHawk
 				{
 					if (SelectedRows.Any() && LetKeysModifySelection)
 					{
-						SelectRow(SelectedRows.Last(), false);
+						SelectItem(SelectedRows.Last(), false);
 					}
 				}
 				else if (e.Control && !e.Shift && !e.Alt && e.KeyCode == Keys.Right) // Ctrl + Right
 				{
-					if (SelectedRows.Any() && LetKeysModifySelection && SelectedRows.Last() < _rowCount - 1)
+					if (SelectedRows.Any() && LetKeysModifySelection && SelectedRows.Last() < _itemCount - 1)
 					{
-						SelectRow(SelectedRows.Last() + 1, true);
+						SelectItem(SelectedRows.Last() + 1, true);
 					}
 				}
 				else if (e.Control && e.Shift && !e.Alt && e.KeyCode == Keys.Left) // Ctrl + Shift + Left
 				{
 					if (SelectedRows.Any() && LetKeysModifySelection && SelectedRows.First() > 0)
 					{
-						SelectRow(SelectedRows.First() - 1, true);
+						SelectItem(SelectedRows.First() - 1, true);
 					}
 				}
 				else if (e.Control && e.Shift && !e.Alt && e.KeyCode == Keys.Right) // Ctrl + Shift + Right
 				{
 					if (SelectedRows.Any() && LetKeysModifySelection)
 					{
-						SelectRow(SelectedRows.First(), false);
+						SelectItem(SelectedRows.First(), false);
 					}
 				}
 				else if (e.Control && !e.Shift && !e.Alt && e.KeyCode == Keys.PageUp) // Ctrl + Page Up
@@ -606,7 +589,7 @@ namespace BizHawk.Client.EmuHawk
 					if (LetKeysModifySelection)
 					{
 						DeselectAll();
-						SelectRow(0, true);
+						SelectItem(0, true);
 					}
 				}
 				else if (e.Control && !e.Shift && !e.Alt && e.KeyCode == Keys.End) // Ctrl + End
@@ -615,7 +598,7 @@ namespace BizHawk.Client.EmuHawk
 					if (LetKeysModifySelection)
 					{
 						DeselectAll();
-						SelectRow(RowCount - 1, true);
+						SelectItem(ItemCount - 1, true);
 					}
 				}
 			}
@@ -631,17 +614,6 @@ namespace BizHawk.Client.EmuHawk
 		{
 			RecalculateScrollBars();
 			base.OnResize(e);
-			Refresh();
-		}
-
-		private void OrientationChanged()
-		{
-			RecalculateScrollBars();
-
-			// TODO scroll to correct positions
-			ColumnChangedCallback();
-			RecalculateScrollBars();
-
 			Refresh();
 		}
 
