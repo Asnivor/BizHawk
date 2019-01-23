@@ -403,7 +403,7 @@ namespace BizHawk.Client.EmuHawk
 					ItemTextFont = new Font("Arial", 8, FontStyle.Regular),
 					ItemTextColor = Color.Black,
 					ItemBackgroundColor = Color.White,
-					ItemHighlightColor = SystemColors.HighlightText,
+					ItemHighlightColor = Color.Blue,
 					GridLineColor = SystemColors.ControlLight,
 				});
 			}

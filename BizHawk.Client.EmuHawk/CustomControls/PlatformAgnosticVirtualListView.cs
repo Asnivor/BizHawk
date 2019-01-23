@@ -42,8 +42,8 @@ namespace BizHawk.Client.EmuHawk
 			//_commonFont = _initFont;
 			UseCustomBackground = true;
 			GridLines = true;
-			CellWidthPadding = 3;
-			CellHeightPadding = 0;
+			//CellWidthPadding = 3;
+			//CellHeightPadding = 0;
 			CurrentCell = null;
 			ScrollMethod = "near";			
 
@@ -65,9 +65,9 @@ namespace BizHawk.Client.EmuHawk
 			}
 			*/
 
-			UpdateCellSize();
-			ColumnWidth = CellWidth;
-			ColumnHeight = CellHeight + 2;
+			//UpdateCellSize();
+			//ColumnWidth = CellWidth;
+			//ColumnHeight = CellHeight + 2;
 
 			_vBar = new VScrollBar
 			{

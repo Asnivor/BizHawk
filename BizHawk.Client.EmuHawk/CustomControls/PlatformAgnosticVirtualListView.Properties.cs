@@ -30,7 +30,7 @@ namespace BizHawk.Client.EmuHawk
 			set
 			{
 				_itemCount = value;
-				RecalculateScrollBars();
+				RecalculateScrollBars();				
 			}
 		}
 
@@ -141,7 +141,13 @@ namespace BizHawk.Client.EmuHawk
 		public bool LetKeysModifySelection { get; set; }
 		public bool SuspendHotkeys { get; set; }
 
-		public bool BlazingFast { get; set; }
+		public bool BlazingFast
+		{
+			set
+			{
+				Refresh();
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the amount of left and right padding on the text inside a cell

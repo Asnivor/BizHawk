@@ -308,6 +308,14 @@ namespace BizHawk.Client.EmuHawk
 			CellWidth = (_charSize.Width/* * MaxCharactersInHorizontal*/) + (CellWidthPadding * 4); // Double the padding for horizontal because it looks better
 		}
 
+		/// <summary>
+		/// Call when _charSize, MaxCharactersInHorizontal, or CellPadding is changed.
+		/// </summary>
+		private void UpdateColumnSize()
+		{
+
+		}
+
 		// Number of displayed + hidden frames, if fps is as expected
 		private int ExpectedDisplayRange()
 		{

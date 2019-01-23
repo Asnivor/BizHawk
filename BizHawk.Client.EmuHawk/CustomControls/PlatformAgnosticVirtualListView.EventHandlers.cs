@@ -411,7 +411,7 @@ namespace BizHawk.Client.EmuHawk
 			int newVal;
 			if (increment)
 			{
-				newVal = bar.Value + bar.SmallChange + 10;
+				newVal = bar.Value + (bar.SmallChange * ScrollSpeed);
 				if (newVal > bar.Maximum - bar.LargeChange)
 				{
 					newVal = bar.Maximum - bar.LargeChange;
@@ -419,7 +419,7 @@ namespace BizHawk.Client.EmuHawk
 			}
 			else
 			{
-				newVal = bar.Value - bar.SmallChange - 10;
+				newVal = bar.Value - (bar.SmallChange * ScrollSpeed);
 				if (newVal < 0)
 				{
 					newVal = 0;

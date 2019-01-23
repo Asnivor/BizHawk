@@ -85,6 +85,11 @@ namespace BizHawk.Client.EmuHawk
 
 		private void SetupControlSettings()
 		{
+			TraceView.MultiSelect = true;
+			TraceView.CellWidthPadding = 3;
+			TraceView.CellHeightPadding = 2;
+			TraceView.ScrollSpeed = 5;
+
 			TraceView.ControlSettings.UpdateSettings(new PlatformAgnosticVirtualListView.Settings
 			{
 				ScrollToCaret = false,
@@ -96,7 +101,7 @@ namespace BizHawk.Client.EmuHawk
 				ItemBackgroundColor = System.Drawing.Color.White
 			});
 
-			TraceView.MultiSelect = true;
+			
 		}
 
 		public bool UpdateBefore
