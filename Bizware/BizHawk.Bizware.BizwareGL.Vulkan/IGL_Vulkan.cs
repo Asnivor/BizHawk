@@ -68,7 +68,7 @@ namespace BizHawk.Bizware.BizwareGL.Drivers.Vulkan
 			}
 		}
 
-		public IGL_Vulkan(int major_version, int minor_version, bool forward_compatible)
+		public IGL_Vulkan(int major_version = 0, int minor_version = 0, bool forward_compatible = false)
 		{
 			//make an 'offscreen context' so we can at least do things without having to create a window
 			OffscreenNativeWindow = new NativeWindow();

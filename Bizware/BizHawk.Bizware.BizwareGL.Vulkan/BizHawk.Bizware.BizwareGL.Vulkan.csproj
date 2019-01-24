@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{5160CFB1-5389-47C1-B7F6-8A0DC97641EE}</ProjectGuid>
+    <ProjectGuid>{538947C1-B7F6-8A0D-C976-41EE5160CFB1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BizHawk.Bizware.BizwareGL.Vulkan</RootNamespace>

@@ -25,7 +25,7 @@ namespace BizHawk.Bizware.BizwareGL.Drivers.Vulkan
 			GLControl = this;
 		}
 
-		global::Vulkan.GLControl GLControl;
+		global::OpenTK.GLControl GLControl;
 		IGL_Vulkan Owner;
 
 		public Control Control { get { return this; } }
