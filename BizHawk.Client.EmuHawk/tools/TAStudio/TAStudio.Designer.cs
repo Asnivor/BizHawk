@@ -993,7 +993,7 @@ namespace BizHawk.Client.EmuHawk
             this.SetRenderer1});
 			this.RendererOptionsMenuItem.Name = "RendererOptionsMenuItem";
 			this.RendererOptionsMenuItem.Size = new System.Drawing.Size(183, 22);
-			this.RendererOptionsMenuItem.Text = "Renderer Options";
+			this.RendererOptionsMenuItem.Text = "Renderer";
 			this.RendererOptionsMenuItem.DropDownOpened += new System.EventHandler(this.SelectedRendererSubMenu_DropDownOpened);
 			// 
 			// SetRenderer0
