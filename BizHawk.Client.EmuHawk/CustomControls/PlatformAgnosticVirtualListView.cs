@@ -32,7 +32,7 @@ namespace BizHawk.Client.EmuHawk
 		private int? _currentY;
 
 		public PlatformAgnosticVirtualListView()
-		{
+		{			
 			ColumnHeaderFont = new Font("Arial", 8, FontStyle.Bold);
 			ColumnHeaderFontColor = Color.Black;
 			ColumnHeaderBackgroundColor = Color.LightGray;
@@ -48,7 +48,10 @@ namespace BizHawk.Client.EmuHawk
 			GridLineColor = SystemColors.ControlLight;
 			
 			UseCustomBackground = true;
-			
+
+			BorderColor = Color.DarkGray;
+			BorderSize = 1;
+
 			CellWidthPadding = 3;
 			CellHeightPadding = 0;
 			CurrentCell = null;

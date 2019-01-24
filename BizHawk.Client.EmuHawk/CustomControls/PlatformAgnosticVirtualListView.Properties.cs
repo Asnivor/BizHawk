@@ -459,6 +459,40 @@ namespace BizHawk.Client.EmuHawk
 		}
 		private Color _gridLineColor;
 
+		/// <summary>
+		/// Gets or sets the size of control's border
+		/// Note: this is drawn directly onto the parent control, so large values will probably look terrible
+		/// </summary>
+		[Category("Appearance")]
+		public int BorderSize { get; set; }
+
+		/// <summary>
+		/// The padding property is disabled for this control (as this is handled internally)
+		/// </summary>
+		[Category("Appearance")]
+		public new System.Windows.Forms.Padding Padding
+		{
+			get { return new System.Windows.Forms.Padding(0); }
+			set { }
+		}
+
+		/// <summary>
+		/// Gets or sets the color of the control's border
+		/// </summary>
+		[Category("Appearance")]
+		public Color BorderColor
+		{
+			get
+			{
+				if (_borderColor == null)
+					_borderColor = SystemColors.InactiveBorder;
+				return _borderColor;
+			}
+			set { _borderColor = value; }
+		}
+		private Color _borderColor;
+
+
 		#endregion
 
 		#region API

@@ -622,9 +622,15 @@ namespace BizHawk.Client.EmuHawk
 
 		protected override void OnResize(EventArgs e)
 		{
-			RecalculateScrollBars();
+			RecalculateScrollBars();	
 			base.OnResize(e);
 			Refresh();
+
+			if (BorderSize > 0)
+			{
+				// refresh the parent control to regen the border
+				this.Parent.Refresh();
+			}			
 		}
 
 		/// <summary>

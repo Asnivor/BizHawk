@@ -94,6 +94,7 @@ namespace BizHawk.Client.EmuHawk
 			TraceView.ColumnHeaderFont = new System.Drawing.Font("Courier New", 8F);
 			TraceView.ColumnHeaderFontColor = System.Drawing.Color.Black;
 			TraceView.ColumnHeaderBackgroundColor = System.Drawing.Color.White;
+			TraceView.ColumnHeaderBackgroundHighlightColor = System.Drawing.Color.LightSteelBlue;
 			TraceView.ColumnHeaderOutlineColor = System.Drawing.Color.White;
 			TraceView.CellFont = new System.Drawing.Font("Courier New", 8F);
 			TraceView.CellFontColor = System.Drawing.Color.Black;

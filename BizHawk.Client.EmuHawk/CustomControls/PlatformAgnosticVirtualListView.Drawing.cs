@@ -52,6 +52,7 @@ namespace BizHawk.Client.EmuHawk
 			sPen = new Pen(Color.White);
 
 			Rectangle rect = e.ClipRectangle;
+
 			e.Graphics.FillRectangle(sBrush, rect);
 			e.Graphics.Flush();
 
@@ -71,6 +72,19 @@ namespace BizHawk.Client.EmuHawk
 
 			DrawColumnDrag(e);
 			DrawCellDrag(e);
+
+			if (BorderSize > 0)
+			{
+				// paint parent border
+				using (var gParent = this.Parent.CreateGraphics())
+				{
+					Pen borderPen = new Pen(BorderColor);
+					for (int b = 1, c = 1; b <= BorderSize; b++, c += 2)
+					{
+						gParent.DrawRectangle(borderPen, this.Left - b, this.Top - b, this.Width + c, this.Height + c);
+					}									
+				}
+			}
 		}
 
 		private void DrawColumnDrag(PaintEventArgs e)
@@ -197,36 +211,7 @@ namespace BizHawk.Client.EmuHawk
 
 						if (!string.IsNullOrWhiteSpace(text))
 						{
-							var colSize = col.Width;
-							Size strLen;
-							using (var g = CreateGraphics())
-							{
-								strLen = Size.Round(g.MeasureString(text, CellFont));
-							}
-							if (strLen.Width > colSize + (CellWidthPadding / 2))
-							{
-								// text needs trimming
-								List<char> chars = new List<char>();
-								chars.Add('.');
-								chars.Add('.');
-								chars.Add('.');
-
-								for (int s = 0; s < text.Length; s++)
-								{
-									chars.Insert(s, text[s]);
-									Size tS;
-									using (var g = CreateGraphics())
-									{
-										tS = Size.Round(g.MeasureString(new string(chars.ToArray()), CellFont));
-									}
-									if (tS.Width >= colSize - 3)
-									{
-										text = new string(chars.ToArray());
-										break;
-									}
-								}
-							}							
-							
+							ResizeTextToFit(ref text, col.Width.Value, CellFont);		
 							e.Graphics.DrawString(text, CellFont, sBrush, (PointF)(new Point(point.X + strOffsetX, point.Y + strOffsetY)));
 						}
 
@@ -234,6 +219,38 @@ namespace BizHawk.Client.EmuHawk
 						{
 							sBrush = new SolidBrush(CellFontColor);
 						}
+					}
+				}
+			}
+		}
+
+		private void ResizeTextToFit(ref string text, int destinationSize, Font font)
+		{
+			Size strLen;
+			using (var g = CreateGraphics())
+			{
+				strLen = Size.Round(g.MeasureString(text, font));
+			}
+			if (strLen.Width > destinationSize - CellWidthPadding)
+			{
+				// text needs trimming
+				List<char> chars = new List<char>();
+
+				for (int s = 0; s < text.Length; s++)
+				{
+					chars.Add(text[s]);
+					Size tS;
+					Size dotS;
+					using (var g = CreateGraphics())
+					{
+						tS = Size.Round(g.MeasureString(new string(chars.ToArray()), CellFont));
+						dotS = Size.Round(g.MeasureString(".", CellFont));
+					}
+					int dotWidth = dotS.Width * 3;
+					if (tS.Width >= destinationSize - CellWidthPadding - dotWidth)
+					{
+						text = new string(chars.ToArray()) + "...";
+						break;
 					}
 				}
 			}
