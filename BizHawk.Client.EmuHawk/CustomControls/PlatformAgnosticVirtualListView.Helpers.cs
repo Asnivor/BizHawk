@@ -8,7 +8,7 @@ namespace BizHawk.Client.EmuHawk
 	/// <summary>
 	/// A performant VirtualListView implementation that doesn't rely on native Win32 API calls
 	/// (and in fact does not inherit the ListView class at all)
-	/// It is a simplified version of the work done with GDI+ rendering in InputRoll.cs
+	/// It is an enhanced version of the work done with GDI+ rendering in InputRoll.cs
 	/// ----------------------
 	/// *** Helper Methods ***
 	/// ----------------------
@@ -35,6 +35,17 @@ namespace BizHawk.Client.EmuHawk
 				_columns.Remove(_columnDown);
 				_columns.Insert(newIndex, _columnDown);
 			}
+		}
+
+		/// <summary>
+		/// Helper method for implementations that do not make use of ColumnReorderedEventArgs related callbacks
+		/// Basically, each column stores its initial index when added in .OriginalIndex
+		/// </summary>
+		/// <param name="currIndex"></param>
+		/// <returns></returns>
+		public int GetOriginalColumnIndex(int currIndex)
+		{
+			return AllColumns[currIndex].OriginalIndex;
 		}
 
 		// ScrollBar.Maximum = DesiredValue + ScrollBar.LargeChange - 1
@@ -171,7 +182,12 @@ namespace BizHawk.Client.EmuHawk
 			}
 		}
 
-		private bool IsHoveringOnColumnCell => CurrentCell?.Column != null && !CurrentCell.RowIndex.HasValue;
+		private bool IsHoveringOnDraggableColumnDivide => 
+			IsHoveringOnColumnCell && 
+			((_currentX <= CurrentCell.Column.Left + 2 && CurrentCell.Column.Index != 0) || 
+			(_currentX >= CurrentCell.Column.Right - 2 && CurrentCell.Column.Index != _columns.Count - 1));	
+
+		private bool IsHoveringOnColumnCell => CurrentCell?.Column != null && !CurrentCell.RowIndex.HasValue;		
 
 		private bool IsHoveringOnDataCell => CurrentCell?.Column != null && CurrentCell.RowIndex.HasValue;
 
@@ -204,7 +220,7 @@ namespace BizHawk.Client.EmuHawk
 			}
 
 			return newCell;
-		}
+		} 
 
 		// A boolean that indicates if the InputRoll is too large vertically and requires a vertical scrollbar.
 		private bool NeedsVScrollbar { get; set; }
@@ -307,7 +323,7 @@ namespace BizHawk.Client.EmuHawk
 			CellHeight = _charSize.Height + (CellHeightPadding * 2);
 			CellWidth = (_charSize.Width/* * MaxCharactersInHorizontal*/) + (CellWidthPadding * 4); // Double the padding for horizontal because it looks better
 		}
-
+		/*
 		/// <summary>
 		/// Call when _charSize, MaxCharactersInHorizontal, or CellPadding is changed.
 		/// </summary>
@@ -315,6 +331,7 @@ namespace BizHawk.Client.EmuHawk
 		{
 
 		}
+		*/
 
 		// Number of displayed + hidden frames, if fps is as expected
 		private int ExpectedDisplayRange()

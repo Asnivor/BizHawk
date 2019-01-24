@@ -9,7 +9,7 @@ namespace BizHawk.Client.EmuHawk
 	/// <summary>
 	/// A performant VirtualListView implementation that doesn't rely on native Win32 API calls
 	/// (and in fact does not inherit the ListView class at all)
-	/// It is a simplified version of the work done with GDI+ rendering in InputRoll.cs
+	/// It is an enhanced version of the work done with GDI+ rendering in InputRoll.cs
 	/// -----------------------------------
 	/// *** Events ***
 	/// -----------------------------------
@@ -139,6 +139,7 @@ namespace BizHawk.Client.EmuHawk
 		#region Mouse and Key Events
 
 		private bool _columnDownMoved;
+
 		protected override void OnMouseMove(MouseEventArgs e)
 		{
 			_currentX = e.X;
@@ -149,7 +150,7 @@ namespace BizHawk.Client.EmuHawk
 				_columnDownMoved = true;
 			}
 
-			Cell newCell = CalculatePointedCell(_currentX.Value, _currentY.Value);
+			Cell newCell = CalculatePointedCell(_currentX.Value, _currentY.Value);			
 
 			/*
 			// SuuperW: Hide lag frames
@@ -184,6 +185,14 @@ namespace BizHawk.Client.EmuHawk
 				Refresh();
 			}
 
+			// cursor changes
+			if (IsHoveringOnDraggableColumnDivide && AllowColumnResize)
+				Cursor.Current = Cursors.VSplit;
+			else if (IsHoveringOnColumnCell && AllowColumnReorder)
+				Cursor.Current = Cursors.Hand;
+			else
+				Cursor.Current = Cursors.Default;
+
 			base.OnMouseMove(e);
 		}
 
@@ -205,6 +214,7 @@ namespace BizHawk.Client.EmuHawk
 			CurrentCell = null;
 			IsPaintDown = false;
 			_hoverTimer.Stop();
+			Cursor.Current = Cursors.Default;
 			Refresh();
 			base.OnMouseLeave(e);
 		}
@@ -251,7 +261,7 @@ namespace BizHawk.Client.EmuHawk
 
 			if (e.Button == MouseButtons.Left)
 			{
-				if (IsHoveringOnColumnCell)
+				if (IsHoveringOnColumnCell && AllowColumnReorder)
 				{
 					_columnDown = CurrentCell.Column;
 				}
@@ -381,7 +391,7 @@ namespace BizHawk.Client.EmuHawk
 
 		protected override void OnMouseUp(MouseEventArgs e)
 		{
-			if (IsHoveringOnColumnCell)
+			if (IsHoveringOnColumnCell && AllowColumnReorder)
 			{
 				if (_columnDown != null && _columnDownMoved)
 				{

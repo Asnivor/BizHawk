@@ -8,22 +8,16 @@ namespace BizHawk.Client.EmuHawk
 	/// <summary>
 	/// A performant VirtualListView implementation that doesn't rely on native Win32 API calls
 	/// (and in fact does not inherit the ListView class at all)
-	/// It is a simplified version of the work done with GDI+ rendering in InputRoll.cs
+	/// It is an enhanced version of the work done with GDI+ rendering in InputRoll.cs
 	/// </summary>
 	public partial class PlatformAgnosticVirtualListView : Control
 	{
-		//private Font _commonFont; // => this.Font; // new Font("Arial", 8, FontStyle.Bold);	
-		//private Font _initFont => this.Font;
-
 		private readonly SortedSet<Cell> _selectedItems = new SortedSet<Cell>(new SortCell());
 
 		private readonly VScrollBar _vBar;
 		private readonly HScrollBar _hBar;
 
 		private readonly Timer _hoverTimer = new Timer();		
-
-		//private readonly Color _foreColor;
-		//private readonly Color _backColor;
 
 		private ListColumns _columns = new ListColumns();
 		
@@ -39,11 +33,24 @@ namespace BizHawk.Client.EmuHawk
 
 		public PlatformAgnosticVirtualListView()
 		{
-			//_commonFont = _initFont;
-			UseCustomBackground = true;
+			ColumnHeaderFont = new Font("Arial", 8, FontStyle.Bold);
+			ColumnHeaderFontColor = Color.Black;
+			ColumnHeaderBackgroundColor = Color.LightGray;
+			ColumnHeaderBackgroundHighlightColor = SystemColors.HighlightText;
+			ColumnHeaderOutlineColor = Color.Black;
+
+			CellFont = new Font("Arial", 8, FontStyle.Regular);				
+			CellFontColor = Color.Black;
+			CellBackgroundColor = Color.White;
+			CellBackgroundHighlightColor = Color.Blue;
+
 			GridLines = true;
-			//CellWidthPadding = 3;
-			//CellHeightPadding = 0;
+			GridLineColor = SystemColors.ControlLight;
+			
+			UseCustomBackground = true;
+			
+			CellWidthPadding = 3;
+			CellHeightPadding = 0;
 			CurrentCell = null;
 			ScrollMethod = "near";			
 
@@ -51,23 +58,7 @@ namespace BizHawk.Client.EmuHawk
 			SetStyle(ControlStyles.UserPaint, true);
 			SetStyle(ControlStyles.SupportsTransparentBackColor, true);
 			SetStyle(ControlStyles.Opaque, true);
-			SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
-
-			ControlSettings = new Settings(this);
-			ControlSettings.InitDefaults();
-
-			//SetCharSize();
-			/*
-			using (var g = CreateGraphics())
-			{
-				var sizeF = g.MeasureString("A", _commonFont);
-				_charSize = Size.Round(sizeF);
-			}
-			*/
-
-			//UpdateCellSize();
-			//ColumnWidth = CellWidth;
-			//ColumnHeight = CellHeight + 2;
+			SetStyle(ControlStyles.OptimizedDoubleBuffer, true);			
 
 			_vBar = new VScrollBar
 			{
@@ -91,16 +82,13 @@ namespace BizHawk.Client.EmuHawk
 			_vBar.ValueChanged += VerticalBar_ValueChanged;
 			_hBar.ValueChanged += HorizontalBar_ValueChanged;
 
-			//HorizontalOrientation = false;
 			RecalculateScrollBars();
+
 			_columns.ChangedCallback = ColumnChangedCallback;
 
 			_hoverTimer.Interval = 750;
 			_hoverTimer.Tick += HoverTimerEventProcessor;
 			_hoverTimer.Stop();
-
-			//_foreColor = ForeColor;
-			//_backColor = BackColor;
 		}		
 
 		private void HoverTimerEventProcessor(object sender, EventArgs e)

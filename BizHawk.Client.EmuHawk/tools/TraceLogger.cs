@@ -73,7 +73,7 @@ namespace BizHawk.Client.EmuHawk
 			FileSizeCap = 150; // make 1 frame of tracelog for n64/psx fit in
 			_splitFile = FileSizeCap != 0;
 
-			SetupControlSettings();
+			SetupTraceViewSettings();
 		}
 
 		private void SetupColumns()
@@ -83,25 +83,21 @@ namespace BizHawk.Client.EmuHawk
 			TraceView.AddColumn("Registers", "Registers", 357, PlatformAgnosticVirtualListView.ListColumn.InputType.Text);
 		}
 
-		private void SetupControlSettings()
+		private void SetupTraceViewSettings()
 		{
 			TraceView.MultiSelect = true;
 			TraceView.CellWidthPadding = 3;
 			TraceView.CellHeightPadding = 2;
 			TraceView.ScrollSpeed = 5;
-
-			TraceView.ControlSettings.UpdateSettings(new PlatformAgnosticVirtualListView.Settings
-			{
-				ScrollToCaret = false,
-				ColumnHeaderTextFont = new System.Drawing.Font("Courier New", 8F),
-				ColumnHeaderTextColor = System.Drawing.Color.Black,
-				ColumnHeaderBackgroundColor = System.Drawing.Color.White,
-				ItemTextFont = new System.Drawing.Font("Courier New", 8F),
-				ItemTextColor = System.Drawing.Color.Black,
-				ItemBackgroundColor = System.Drawing.Color.White
-			});
-
-			
+			TraceView.AllowColumnResize = true;
+			TraceView.AllowColumnReorder = true;
+			TraceView.ColumnHeaderFont = new System.Drawing.Font("Courier New", 8F);
+			TraceView.ColumnHeaderFontColor = System.Drawing.Color.Black;
+			TraceView.ColumnHeaderBackgroundColor = System.Drawing.Color.White;
+			TraceView.ColumnHeaderOutlineColor = System.Drawing.Color.White;
+			TraceView.CellFont = new System.Drawing.Font("Courier New", 8F);
+			TraceView.CellFontColor = System.Drawing.Color.Black;
+			TraceView.CellBackgroundColor = System.Drawing.Color.White;
 		}
 
 		public bool UpdateBefore
@@ -124,7 +120,9 @@ namespace BizHawk.Client.EmuHawk
 			text = "";
 			if (index < _instructions.Count)
 			{
-				switch (column)
+				var test = TraceView.AllColumns;
+
+				switch (TraceView.GetOriginalColumnIndex(column))
 				{
 					case 0:
 						text = _instructions[index].Disassembly.TrimEnd();
