@@ -142,13 +142,8 @@ namespace BizHawk.Client.EmuHawk
 			}
 		}
 
-		public bool BlazingFast
-		{
-			set
-			{
-				Refresh();
-			}
-		}
+		[Category("Behavior")]
+		public bool BlazingFast { get; set; }
 
 		#endregion
 

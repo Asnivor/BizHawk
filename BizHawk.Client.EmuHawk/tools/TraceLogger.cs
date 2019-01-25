@@ -164,6 +164,7 @@ namespace BizHawk.Client.EmuHawk
 				if (ToWindowRadio.Checked)
 				{
 					TraceView.VirtualListSize = _instructions.Count;
+					//TraceView.Refresh();
 				}
 				else
 				{
@@ -179,7 +180,11 @@ namespace BizHawk.Client.EmuHawk
 					if (ToWindowRadio.Checked)
 					{
 						//update listview with most recentr results
-						TraceView.BlazingFast = !GlobalWin.MainForm.EmulatorPaused;
+						//TraceView.BlazingFast = !GlobalWin.MainForm.EmulatorPaused;
+						if (!GlobalWin.MainForm.EmulatorPaused)
+						{
+							TraceView.Refresh();
+						}
 
 						Tracer.Sink = new CallbackSink()
 						{
@@ -192,7 +197,10 @@ namespace BizHawk.Client.EmuHawk
 								_instructions.Add(info);
 							}
 						};
-						_instructions.Clear();
+						//TraceView.ItemCount = _instructions.Count;
+						//TraceView.Refresh();
+						//_instructions.Clear();
+						
 					}
 					else
 					{
