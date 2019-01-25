@@ -36,6 +36,9 @@ namespace BizHawk.Client.EmuHawk
 			set { this.Registers.Width = value; }
 		}
 
+		[ConfigPersist]
+		public override bool AutoScroll { get; set; }
+
 		private FileInfo _logFile;
 		private FileInfo LogFile
 		{
@@ -140,6 +143,7 @@ namespace BizHawk.Client.EmuHawk
 			ClearList();
 			OpenLogFile.Enabled = false;
 			LoggingEnabled.Checked = false;
+			AutoScrollMenuItem.Checked = AutoScroll;
 			Tracer.Sink = null;
 			SetTracerBoxTitle();
 			SetupColumns();
@@ -164,7 +168,12 @@ namespace BizHawk.Client.EmuHawk
 				if (ToWindowRadio.Checked)
 				{
 					TraceView.VirtualListSize = _instructions.Count;
-					//TraceView.Refresh();
+					if (GlobalWin.MainForm.EmulatorPaused)
+					{
+						if (AutoScroll && _instructions.Count != 0)
+							TraceView.ScrollToIndex(_instructions.IndexOf(_instructions.Last()));
+						TraceView.Refresh();
+					}						
 				}
 				else
 				{
@@ -179,12 +188,10 @@ namespace BizHawk.Client.EmuHawk
 					//connect tracer to sink for next frame
 					if (ToWindowRadio.Checked)
 					{
-						//update listview with most recentr results
-						//TraceView.BlazingFast = !GlobalWin.MainForm.EmulatorPaused;
-						if (!GlobalWin.MainForm.EmulatorPaused)
-						{
-							TraceView.Refresh();
-						}
+						if (AutoScroll && _instructions.Count != 0)
+							TraceView.ScrollToIndex(_instructions.IndexOf(_instructions.Last()));
+
+						TraceView.Refresh();
 
 						Tracer.Sink = new CallbackSink()
 						{
@@ -196,11 +203,7 @@ namespace BizHawk.Client.EmuHawk
 								}
 								_instructions.Add(info);
 							}
-						};
-						//TraceView.ItemCount = _instructions.Count;
-						//TraceView.Refresh();
-						//_instructions.Clear();
-						
+						};						
 					}
 					else
 					{
@@ -426,6 +429,11 @@ namespace BizHawk.Client.EmuHawk
 				FileSizeCap = int.Parse(prompt.PromptText);
 				_splitFile = FileSizeCap != 0;
 			}
+		}
+
+		private void AutoScrollMenuItem_Click(object sender, EventArgs e)
+		{
+			AutoScroll = ((ToolStripMenuItem)sender as ToolStripMenuItem).Checked;
 		}
 
 		#endregion
