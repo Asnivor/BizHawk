@@ -550,8 +550,8 @@ namespace BizHawk.Client.EmuHawk
 
 		private void GDIP_DrawString(PaintEventArgs e, string text, Font font, Point point, Color color)
 		{
-			TextRenderer.DrawText(e.Graphics, text, font, point, color);
-			//e.Graphics.DrawString(text, font, new SolidBrush(color), (PointF)point);
+			//TextRenderer.DrawText(e.Graphics, text, font, point, color);
+			e.Graphics.DrawString(text, font, new SolidBrush(color), (PointF)point);
 		}
 
 		#endregion
