@@ -19,6 +19,9 @@ namespace BizHawk.Client.EmuHawk
 		// single instance to mirror GDI implementation
 		private Brush sBrush = null;
 
+		// GDI+ uses floats for measure string
+		private SizeF _charSizeF;
+
 		#region Initialization and Destruction
 
 		/// <summary>
@@ -38,8 +41,8 @@ namespace BizHawk.Client.EmuHawk
 
 			using (var g = CreateGraphics())
 			{
-				var sizeF = g.MeasureString("A", _commonFont);
-				_charSize = Size.Round(sizeF);
+				_charSizeF = g.MeasureString("A", _commonFont);
+				//_charSize = Size.Round(sizeF);
 			}
 		}
 
@@ -95,7 +98,8 @@ namespace BizHawk.Client.EmuHawk
 				sPen =  new Pen(_backColor);
 				e.Graphics.DrawRectangle(sPen, x1, y1, x2, y2);
 				sBrush = new SolidBrush(_foreColor);
-				e.Graphics.DrawString(_columnDown.Text, _commonFont, sBrush, (PointF)(new Point(x1 + CellWidthPadding, y1 + CellHeightPadding)));
+				//e.Graphics.DrawString(_columnDown.Text, _commonFont, sBrush, (PointF)(new Point(x1 + CellWidthPadding, y1 + CellHeightPadding)));
+				GDIP_DrawString(e, _columnDown.Text, _commonFont, new Point(x1 + CellWidthPadding, y1 + CellHeightPadding), _foreColor);
 			}
 		}
 
@@ -119,7 +123,8 @@ namespace BizHawk.Client.EmuHawk
 				sBrush = new SolidBrush(bgColor);
 				e.Graphics.FillRectangle(sBrush, x1, y1, x2 - x1, y2 - y1);
 				sBrush = new SolidBrush(_foreColor);
-				e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)(new Point(x1 + CellWidthPadding + offsetX, y1 + CellHeightPadding + offsetY)));
+				//e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)(new Point(x1 + CellWidthPadding + offsetX, y1 + CellHeightPadding + offsetY)));
+				GDIP_DrawString(e, text, _commonFont, new Point(x1 + CellWidthPadding + offsetX, y1 + CellHeightPadding + offsetY), _foreColor);
 			}
 		}
 
@@ -138,12 +143,14 @@ namespace BizHawk.Client.EmuHawk
 					if (IsHoveringOnColumnCell && column == CurrentCell.Column)
 					{
 						sBrush = new SolidBrush(SystemColors.HighlightText);
-						e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						//e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						GDIP_DrawString(e, column.Text, _commonFont, point, SystemColors.HighlightText);
 						sBrush = new SolidBrush(_foreColor);
 					}
 					else
 					{
-						e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						//e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						GDIP_DrawString(e, column.Text, _commonFont, point, _foreColor);
 					}
 
 					start += CellHeight;
@@ -155,17 +162,20 @@ namespace BizHawk.Client.EmuHawk
 
 				foreach (var column in visibleColumns)
 				{
-					var point = new Point(column.Left.Value + 2 * CellWidthPadding - _hBar.Value, CellHeightPadding); // TODO: fix this CellPadding issue (2 * CellPadding vs just CellPadding)
+					int xPadding = CellWidthPadding + 1 - _hBar.Value;
+					var point = new Point(column.Left.Value + xPadding, CellHeightPadding);
 
 					if (IsHoveringOnColumnCell && column == CurrentCell.Column)
 					{
 						sBrush = new SolidBrush(SystemColors.HighlightText);
-						e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						//e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						GDIP_DrawString(e, column.Text, _commonFont, point, SystemColors.HighlightText);
 						sBrush = new SolidBrush(_foreColor);
 					}
 					else
 					{
-						e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						//e.Graphics.DrawString(column.Text, _commonFont, sBrush, (PointF)(point));
+						GDIP_DrawString(e, column.Text, _commonFont, point, _foreColor);
 					}
 				}
 			}
@@ -216,7 +226,7 @@ namespace BizHawk.Client.EmuHawk
 							QueryItemText(f + startRow, visibleColumns[j], out text, ref strOffsetX, ref strOffsetY);
 
 							// Center Text
-							x = RowsToPixels(i) + ((CellWidth - (text.Length * _charSize.Width)) / 2);
+							x = RowsToPixels(i) + ((CellWidth - (int)Math.Round((text.Length * _charSizeF.Width))) / 2);
 							y = (j * CellHeight) + CellHeightPadding - _vBar.Value;
 							var point = new Point(x + strOffsetX, y + strOffsetY);
 
@@ -249,7 +259,8 @@ namespace BizHawk.Client.EmuHawk
 								}
 								else
 								{
-									e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)point);
+									//e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)point);
+									GDIP_DrawString(e, text, _commonFont, point, new Pen(sBrush).Color);
 								}
 							}
 
@@ -305,7 +316,8 @@ namespace BizHawk.Client.EmuHawk
 
 							if (!string.IsNullOrWhiteSpace(text))
 							{
-								e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)(new Point(point.X + strOffsetX, point.Y + strOffsetY)));
+								//e.Graphics.DrawString(text, _commonFont, sBrush, (PointF)(new Point(point.X + strOffsetX, point.Y + strOffsetY)));
+								GDIP_DrawString(e, text, _commonFont, new Point(point.X + strOffsetX, point.Y + strOffsetY), new Pen(sBrush).Color);
 							}
 
 							if (rePrep)
@@ -534,6 +546,12 @@ namespace BizHawk.Client.EmuHawk
 			}				
 			
 			e.Graphics.FillRectangle(sBrush, x, y, w, h);			
+		}
+
+		private void GDIP_DrawString(PaintEventArgs e, string text, Font font, Point point, Color color)
+		{
+			TextRenderer.DrawText(e.Graphics, text, font, point, color);
+			//e.Graphics.DrawString(text, font, new SolidBrush(color), (PointF)point);
 		}
 
 		#endregion

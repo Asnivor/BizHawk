@@ -18,7 +18,7 @@ namespace BizHawk.Client.EmuHawk
 	{
 		private RollRenderer Renderer = RollRenderer.GDIPlus;
 
-		private Font _commonFont = new Font("Arial", 8, FontStyle.Bold);
+		private Font _commonFont;
 
 		private readonly SortedSet<Cell> _selectedItems = new SortedSet<Cell>(new SortCell());
 
@@ -36,8 +36,7 @@ namespace BizHawk.Client.EmuHawk
 		private bool _programmaticallyUpdatingScrollBarValues;
 		private int _maxCharactersInHorizontal = 1;
 
-		private int _rowCount;
-		private Size _charSize;
+		private int _rowCount;		
 
 		private RollColumn _columnDown;
 
@@ -67,6 +66,7 @@ namespace BizHawk.Client.EmuHawk
 			switch (Renderer)
 			{
 				case RollRenderer.GDI:
+					_commonFont = new Font("Arial", 8, FontStyle.Bold);
 					_normalFont = Win32GDIRenderer.CreateNormalHFont(_commonFont, 6);
 
 					// PrepDrawString doesn't actually set the font, so this is rather useless.
@@ -83,6 +83,8 @@ namespace BizHawk.Client.EmuHawk
 					GDIConstruction();
 					break;
 				case RollRenderer.GDIPlus:
+					_commonFont = new Font("Arial", 8, FontStyle.Bold);
+					//_commonFont = new Font("Courier New", 8F, FontStyle.Bold);
 					GDIPConstruction();
 					break;
 			}	
@@ -1816,7 +1818,16 @@ namespace BizHawk.Client.EmuHawk
 		/// <returns>The new width of the RollColumn object.</returns>
 		private int UpdateWidth(RollColumn col)
 		{
-			col.Width = (col.Text.Length * _charSize.Width) + (CellWidthPadding * 4);
+			switch (Renderer)
+			{
+				case RollRenderer.GDI:
+					col.Width = (col.Text.Length * _charSize.Width) + (CellWidthPadding * 4);
+					break;
+				case RollRenderer.GDIPlus:
+					col.Width = (int)Math.Round((col.Text.Length * _charSizeF.Width) + (CellWidthPadding * 4));
+					break;
+			}
+			
 			return col.Width.Value;
 		}
 
@@ -1908,8 +1919,19 @@ namespace BizHawk.Client.EmuHawk
 		/// </summary>
 		private void UpdateCellSize()
 		{
-			CellHeight = _charSize.Height + (CellHeightPadding * 2);
-			CellWidth = (_charSize.Width * MaxCharactersInHorizontal) + (CellWidthPadding * 4); // Double the padding for horizontal because it looks better
+			switch (Renderer)
+			{
+				case RollRenderer.GDI:
+					CellHeight = _charSize.Height + (CellHeightPadding * 2);
+					CellWidth = (_charSize.Width * MaxCharactersInHorizontal) + (CellWidthPadding * 4); // Double the padding for horizontal because it looks better
+					break;
+				case RollRenderer.GDIPlus:
+					CellHeight = (int)Math.Round(_charSizeF.Height + (CellHeightPadding * 2) + 1);	// needed for GDI+ to match GDI cell height
+					CellWidth = (int)Math.Round((_charSizeF.Width * MaxCharactersInHorizontal) + (CellWidthPadding * 4)); // Double the padding for horizontal because it looks better
+					break;
+			}
+			
+			
 		}
 
 		// SuuperW: Count lag frames between FirstDisplayed and given display position

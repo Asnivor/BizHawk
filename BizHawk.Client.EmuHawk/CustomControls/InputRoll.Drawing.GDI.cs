@@ -17,6 +17,7 @@ namespace BizHawk.Client.EmuHawk
 		private readonly GDI.GDIRenderer _gdi;
 		private readonly IntPtr _rotatedFont;
 		private readonly IntPtr _normalFont;
+		private Size _charSize;
 
 		#region Initialization and Destruction
 
