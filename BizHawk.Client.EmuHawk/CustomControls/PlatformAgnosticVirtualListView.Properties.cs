@@ -462,6 +462,13 @@ namespace BizHawk.Client.EmuHawk
 		public int BorderSize { get; set; }
 
 		/// <summary>
+		/// Defines the absolute minimum column size (used when manually resizing columns)
+		/// </summary>
+		[DefaultValue(50)]
+		[Category("Appearance")]
+		public int MinimumColumnSize { get; set; }
+
+		/// <summary>
 		/// The padding property is disabled for this control (as this is handled internally)
 		/// </summary>
 		[Category("Appearance")]

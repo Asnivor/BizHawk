@@ -146,15 +146,18 @@ namespace BizHawk.Client.EmuHawk
 			{
 				var point = new Point(column.Left.Value + 2 * CellWidthPadding - _hBar.Value, CellHeightPadding); // TODO: fix this CellPadding issue (2 * CellPadding vs just CellPadding)
 
+				string t = column.Text;
+				ResizeTextToFit(ref t, column.Width.Value, ColumnHeaderFont);
+
 				if (IsHoveringOnColumnCell && column == CurrentCell.Column)
 				{
-					sBrush = new SolidBrush(InvertColor(ColumnHeaderBackgroundHighlightColor));
-					e.Graphics.DrawString(column.Text, ColumnHeaderFont, sBrush, (PointF)(point));
+					sBrush = new SolidBrush(InvertColor(ColumnHeaderBackgroundHighlightColor));					
+					e.Graphics.DrawString(t, ColumnHeaderFont, sBrush, (PointF)(point));
 					sBrush = new SolidBrush(ColumnHeaderFontColor);
 				}
 				else
 				{
-					e.Graphics.DrawString(column.Text, ColumnHeaderFont, sBrush, (PointF)(point));
+					e.Graphics.DrawString(t, ColumnHeaderFont, sBrush, (PointF)(point));
 				}
 			}
 		}

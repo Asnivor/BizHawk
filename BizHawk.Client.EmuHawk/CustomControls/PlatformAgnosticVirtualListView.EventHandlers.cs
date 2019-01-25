@@ -151,15 +151,7 @@ namespace BizHawk.Client.EmuHawk
 			}
 
 			Cell newCell = CalculatePointedCell(_currentX.Value, _currentY.Value);			
-
-			/*
-			// SuuperW: Hide lag frames
-			if (QueryFrameLag != null && newCell.RowIndex.HasValue)
-			{
-				newCell.RowIndex += CountLagFramesDisplay(newCell.RowIndex.Value);
-			}
-			*/
-
+			
 			newCell.RowIndex += FirstVisibleRow;
 			if (newCell.RowIndex < 0)
 			{
@@ -182,6 +174,13 @@ namespace BizHawk.Client.EmuHawk
 			}
 			else if (_columnDown != null)  // Kind of silly feeling to have this check twice, but the only alternative I can think of has it refreshing twice when pointed column changes with column down, and speed matters
 			{
+				Refresh();
+			}
+
+			if (_columnSeparatorDown != null)
+			{
+				// column is being resized
+				DoColumnResize();
 				Refresh();
 			}
 
@@ -226,12 +225,6 @@ namespace BizHawk.Client.EmuHawk
 			{
 				// copypaste from OnMouseMove()
 				Cell newCell = CalculatePointedCell(_currentX.Value, _currentY.Value);
-				/*
-				if (QueryFrameLag != null && newCell.RowIndex.HasValue)
-				{
-					newCell.RowIndex += CountLagFramesDisplay(newCell.RowIndex.Value);
-				}
-				*/
 
 				newCell.RowIndex += FirstVisibleRow;
 				if (newCell.RowIndex < 0)
@@ -261,7 +254,11 @@ namespace BizHawk.Client.EmuHawk
 
 			if (e.Button == MouseButtons.Left)
 			{
-				if (IsHoveringOnColumnCell && AllowColumnReorder)
+				if (IsHoveringOnDraggableColumnDivide && AllowColumnResize)
+				{
+					_columnSeparatorDown = ColumnAtX(_currentX.Value);
+				}
+				else if (IsHoveringOnColumnCell && AllowColumnReorder)
 				{
 					_columnDown = CurrentCell.Column;
 				}
@@ -391,8 +388,13 @@ namespace BizHawk.Client.EmuHawk
 
 		protected override void OnMouseUp(MouseEventArgs e)
 		{
-			if (IsHoveringOnColumnCell && AllowColumnReorder)
+			if (_columnSeparatorDown != null && AllowColumnResize)
 			{
+				DoColumnResize();				
+				Refresh();
+			}
+			else if (IsHoveringOnColumnCell && AllowColumnReorder)
+			{				
 				if (_columnDown != null && _columnDownMoved)
 				{
 					DoColumnReorder();
@@ -411,6 +413,7 @@ namespace BizHawk.Client.EmuHawk
 
 			_columnDown = null;
 			_columnDownMoved = false;
+			_columnSeparatorDown = null;
 			RightButtonHeld = false;
 			IsPaintDown = false;
 			base.OnMouseUp(e);

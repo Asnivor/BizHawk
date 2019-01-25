@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace BizHawk.Client.EmuHawk
 {
@@ -221,6 +222,22 @@ namespace BizHawk.Client.EmuHawk
 
 			return newCell;
 		} 
+
+
+		private void CalculateColumnToResize()
+		{
+			// if this is reached, we are already over a selectable column divide
+			_columnSeparatorDown = ColumnAtX(_currentX.Value);
+		}
+
+		private void DoColumnResize()
+		{
+			var widthChange = _currentX - _columnSeparatorDown.Right;
+			_columnSeparatorDown.Width += widthChange;
+			if (_columnSeparatorDown.Width < MinimumColumnSize)
+				_columnSeparatorDown.Width = MinimumColumnSize;
+			AllColumns.ColumnsChanged();
+		}
 
 		// A boolean that indicates if the InputRoll is too large vertically and requires a vertical scrollbar.
 		private bool NeedsVScrollbar { get; set; }

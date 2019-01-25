@@ -27,6 +27,7 @@ namespace BizHawk.Client.EmuHawk
 		private Size _charSize;
 
 		private ListColumn _columnDown;
+		private ListColumn _columnSeparatorDown;
 
 		private int? _currentX;
 		private int? _currentY;
@@ -51,6 +52,8 @@ namespace BizHawk.Client.EmuHawk
 
 			BorderColor = Color.DarkGray;
 			BorderSize = 1;
+
+			MinimumColumnSize = 50;
 
 			CellWidthPadding = 3;
 			CellHeightPadding = 0;
