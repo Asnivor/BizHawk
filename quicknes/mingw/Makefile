@@ -13,7 +13,7 @@ endif
 
 CXXFLAGS_32 = -march=pentium4 -mtune=core2
 CXXFLAGS_64 =
-CXXFLAGS = -Wall -DDISABLE_AUTO_FILE -D__LIBRETRO__ -DNDEBUG -I.. -O3 -Wno-multichar -fno-exceptions -fomit-frame-pointer -flto $(CXXFLAGS_$(ARCH)) 
+CXXFLAGS = -Wall -DDISABLE_AUTO_FILE -D__LIBRETRO__ -DNDEBUG -I.. -O3 -Wno-multichar -fno-exceptions -fomit-frame-pointer -flto $(CXXFLAGS_$(ARCH)) -fPIC
 # TODO: include these as options in the Makefile
 # -fprofile-generate
 # -fprofile-use
